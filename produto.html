@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Produto — Use Giselly Cristine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/tokens.css" />
+<link rel="stylesheet" href="assets/css/layout.css" />
+<link rel="stylesheet" href="assets/css/components.css" />
+</head>
+<body>
+
+<div id="headerMount"></div>
+
+<main class="wrap">
+  <p class="breadcrumb">
+    <a href="index.html">Início</a><span class="sep">/</span>
+    <a href="catalogo.html" id="crumbCat">Categoria</a><span class="sep">/</span>
+    <span id="crumbName">Produto</span>
+  </p>
+
+  <div class="product-page" id="productPage"></div>
+
+  <section class="section" style="padding-top:0">
+    <div class="section-head">
+      <h2>Você também pode gostar</h2>
+    </div>
+    <div class="product-grid" id="relatedGrid"></div>
+  </section>
+</main>
+
+<footer class="site-footer" id="footerMount"></footer>
+
+<script src="assets/js/products.js"></script>
+<script src="assets/js/cart.js"></script>
+<script src="assets/js/ui.js"></script>
+<script>
+  mountLayout();
+  const id = new URLSearchParams(location.search).get("id");
+  const product = getProductById(id) || PRODUCTS[0];
+
+  document.title = `${product.name} — Use Giselly Cristine`;
+  document.getElementById("crumbCat").textContent = CATEGORY_LABELS[product.category];
+  document.getElementById("crumbCat").href = `catalogo.html?cat=${product.category}`;
+  document.getElementById("crumbName").textContent = product.name;
+
+  document.getElementById("productPage").innerHTML = `
+    <div class="gallery">
+      <div class="gallery-main"><img id="mainImg" src="${product.images[0]}" alt="${product.name}"></div>
+      <div class="gallery-thumbs">
+        ${product.images.map((img, i) => `<button data-img="${img}" class="${i===0?'active':''}"><img src="${img}" alt=""></button>`).join("")}
+      </div>
+    </div>
+    <div class="pd-details">
+      <span class="label">${CATEGORY_LABELS[product.category]}</span>
+      <h1 class="pd-name">${product.name}</h1>
+      <div class="pd-price">
+        ${product.oldPrice ? `<span class="old">${formatBRL(product.oldPrice)}</span><span class="now">${formatBRL(product.price)}</span>` : `<span>${formatBRL(product.price)}</span>`}
+      </div>
+      <p class="pd-installment">em até 6x de ${formatBRL(product.price/6)} sem juros ou 10% off no Pix</p>
+      <p class="pd-desc">${product.description}</p>
+
+      <div class="pd-option">
+        <div class="opt-head"><span>Cor: <strong id="colorLabel">${product.colors[0].name}</strong></span></div>
+        <div class="swatch-row" id="colorRow">
+          ${product.colors.map((c,i) => `<span class="swatch ${i===0?'selected':''}" style="background:${c.hex};${i===0?'outline:2px solid var(--ink);outline-offset:2px':''}" data-color="${c.name}"></span>`).join("")}
+        </div>
+      </div>
+
+      <div class="pd-option">
+        <div class="opt-head"><span>Tamanho</span><a href="#" class="guide-link" id="sizeGuideLink">guia de medidas</a></div>
+        <div class="size-row" id="sizeRow">
+          ${product.sizes.map((s,i) => `<button class="size-opt ${i===0?'selected':''}" data-size="${s}">${s}</button>`).join("")}
+        </div>
+      </div>
+
+      <div class="pd-actions">
+        <button class="btn btn-wine" id="addToCartBtn">Adicionar ao carrinho</button>
+        <button class="fav-btn-lg" id="favBtnLg" data-fav="${product.id}">${ICONS.heart}</button>
+      </div>
+
+      <div class="pd-info-list">
+        <details open>
+          <summary>Envio e entrega</summary>
+          <p>Enviamos para todo o Brasil. Prazo estimado de 5 a 12 dias úteis conforme a região, com frete grátis em compras acima de R$ 399.</p>
+        </details>
+        <details>
+          <summary>Trocas e devoluções</summary>
+          <p>Você tem até 30 dias corridos após o recebimento para solicitar troca ou devolução, com a peça em perfeito estado.</p>
+        </details>
+        <details>
+          <summary>Guia de medidas</summary>
+          <p>Consulte a tabela de medidas de cada categoria antes de finalizar sua escolha para garantir o caimento ideal.</p>
+        </details>
+      </div>
+    </div>`;
+
+  document.getElementById("relatedGrid").innerHTML = PRODUCTS.filter(p => p.category === product.category && p.id !== product.id).slice(0,4).map(productCardHTML).join("");
+
+  document.getElementById("productPage").addEventListener("click", (e) => {
+    const thumb = e.target.closest("[data-img]");
+    if (thumb){
+      document.getElementById("mainImg").src = thumb.dataset.img;
+      document.querySelectorAll(".gallery-thumbs button").forEach(b => b.classList.remove("active"));
+      thumb.classList.add("active");
+    }
+    const colorSw = e.target.closest("#colorRow .swatch");
+    if (colorSw){
+      document.querySelectorAll("#colorRow .swatch").forEach(s => s.style.outline = "none");
+      colorSw.style.outline = "2px solid var(--ink)";
+      colorSw.style.outlineOffset = "2px";
+      document.getElementById("colorLabel").textContent = colorSw.dataset.color;
+    }
+    const sizeBtn = e.target.closest("#sizeRow .size-opt");
+    if (sizeBtn){
+      document.querySelectorAll("#sizeRow .size-opt").forEach(b => b.classList.remove("selected"));
+      sizeBtn.classList.add("selected");
+    }
+  });
+
+  document.getElementById("addToCartBtn").addEventListener("click", () => {
+    const size = document.querySelector("#sizeRow .size-opt.selected").dataset.size;
+    const color = document.getElementById("colorLabel").textContent;
+    addToCart(product.id, size, color, 1);
+    const btn = document.getElementById("addToCartBtn");
+    btn.textContent = "Adicionado à sacola ✓";
+    setTimeout(() => btn.textContent = "Adicionar ao carrinho", 1500);
+  });
+</script>
+</body>
+</html>

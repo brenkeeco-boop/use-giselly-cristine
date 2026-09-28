@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Catálogo — Use Giselly Cristine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/tokens.css" />
+<link rel="stylesheet" href="assets/css/layout.css" />
+<link rel="stylesheet" href="assets/css/components.css" />
+</head>
+<body>
+
+<div id="headerMount"></div>
+
+<main class="wrap">
+  <p class="breadcrumb"><a href="index.html">Início</a><span class="sep">/</span><span id="crumbLabel">Catálogo</span></p>
+
+  <div class="catalog-head">
+    <h1 id="catTitle">Todos os produtos</h1>
+    <div class="catalog-toolbar">
+      <span class="label" id="resultCount">12 peças</span>
+      <select class="sort-select" id="sortSelect">
+        <option value="relevance">Ordenar por relevância</option>
+        <option value="price-asc">Menor preço</option>
+        <option value="price-desc">Maior preço</option>
+        <option value="new">Novidades primeiro</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="catalog-layout">
+    <aside class="filters">
+      <div class="filter-group">
+        <h4>Categoria</h4>
+        <label class="filter-opt"><input type="checkbox" value="vestidos" class="f-cat"> Vestidos</label>
+        <label class="filter-opt"><input type="checkbox" value="conjuntos" class="f-cat"> Conjuntos</label>
+        <label class="filter-opt"><input type="checkbox" value="blusas" class="f-cat"> Blusas</label>
+        <label class="filter-opt"><input type="checkbox" value="calcas" class="f-cat"> Calças</label>
+        <label class="filter-opt"><input type="checkbox" value="saias" class="f-cat"> Saias</label>
+      </div>
+      <div class="filter-group">
+        <h4>Tamanho</h4>
+        <div class="size-row">
+          <button class="size-opt" data-size="PP">PP</button>
+          <button class="size-opt" data-size="P">P</button>
+          <button class="size-opt" data-size="M">M</button>
+          <button class="size-opt" data-size="G">G</button>
+          <button class="size-opt" data-size="GG">GG</button>
+        </div>
+      </div>
+      <div class="filter-group">
+        <h4>Cor</h4>
+        <div class="swatch-row">
+          <span class="swatch" style="background:#6E2430" data-color="Vinho" title="Vinho"></span>
+          <span class="swatch" style="background:#221C19" data-color="Preto" title="Preto"></span>
+          <span class="swatch" style="background:#C3985F" data-color="Camel" title="Camel"></span>
+          <span class="swatch" style="background:#F1EBDE" data-color="Off White" title="Off White"></span>
+          <span class="swatch" style="background:#4B5842" data-color="Verde Musgo" title="Verde Musgo"></span>
+        </div>
+      </div>
+      <div class="filter-group">
+        <h4>Faixa de preço</h4>
+        <label class="filter-opt"><input type="radio" name="pricerange" checked> Todos os preços</label>
+        <label class="filter-opt"><input type="radio" name="pricerange"> Até R$ 200</label>
+        <label class="filter-opt"><input type="radio" name="pricerange"> R$ 200 – R$ 400</label>
+        <label class="filter-opt"><input type="radio" name="pricerange"> Acima de R$ 400</label>
+      </div>
+    </aside>
+
+    <div>
+      <div class="product-grid" id="productGrid"></div>
+      <div class="load-more">
+        <button class="btn btn-outline" id="loadMoreBtn">Carregar mais</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer class="site-footer" id="footerMount"></footer>
+
+<script src="assets/js/products.js"></script>
+<script src="assets/js/cart.js"></script>
+<script src="assets/js/ui.js"></script>
+<script>
+  const params = new URLSearchParams(location.search);
+  const cat = params.get("cat") || "todos";
+  mountLayout(cat !== "todos" ? cat : null);
+
+  const title = CATEGORY_LABELS[cat] || "Todos os produtos";
+  document.getElementById("catTitle").textContent = title;
+  document.getElementById("crumbLabel").textContent = title;
+  if (cat !== "todos") document.querySelector(`.f-cat[value="${cat}"]`) && (document.querySelector(`.f-cat[value="${cat}"]`).checked = true);
+
+  let list = getProductsByCategory(cat);
+  let visible = 8;
+
+  function draw(){
+    document.getElementById("resultCount").textContent = `${list.length} peça${list.length !== 1 ? "s" : ""}`;
+    document.getElementById("productGrid").innerHTML = list.slice(0, visible).map(productCardHTML).join("");
+    document.getElementById("loadMoreBtn").style.display = visible >= list.length ? "none" : "inline-flex";
+  }
+  draw();
+
+  document.getElementById("loadMoreBtn").addEventListener("click", () => { visible += 8; draw(); });
+
+  document.getElementById("sortSelect").addEventListener("change", (e) => {
+    const v = e.target.value;
+    if (v === "price-asc") list.sort((a,b) => a.price - b.price);
+    else if (v === "price-desc") list.sort((a,b) => b.price - a.price);
+    else if (v === "new") list.sort((a,b) => (b.isNew - a.isNew));
+    else list = getProductsByCategory(cat);
+    visible = 8;
+    draw();
+  });
+
+  document.querySelectorAll(".f-cat").forEach(cb => {
+    cb.addEventListener("change", () => {
+      const checked = [...document.querySelectorAll(".f-cat:checked")].map(c => c.value);
+      list = checked.length ? PRODUCTS.filter(p => checked.includes(p.category)) : getProductsByCategory(cat);
+      visible = 8;
+      draw();
+    });
+  });
+
+  document.querySelectorAll(".size-opt").forEach(btn => {
+    btn.addEventListener("click", () => btn.classList.toggle("selected"));
+  });
+</script>
+</body>
+</html>

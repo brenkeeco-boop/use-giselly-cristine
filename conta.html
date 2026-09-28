@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Minha Conta — Use Giselly Cristine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/tokens.css" />
+<link rel="stylesheet" href="assets/css/layout.css" />
+<link rel="stylesheet" href="assets/css/components.css" />
+</head>
+<body>
+
+<div id="headerMount"></div>
+
+<main class="wrap">
+  <p class="breadcrumb"><a href="index.html">Início</a><span class="sep">/</span><span>Minha conta</span></p>
+
+  <div class="account-tabs">
+    <button class="tab-btn active" data-tab="entrar">Entrar</button>
+    <button class="tab-btn" data-tab="cadastrar">Criar conta</button>
+    <button class="tab-btn" data-tab="favoritos">Favoritos</button>
+    <button class="tab-btn" data-tab="pedidos">Meus pedidos</button>
+  </div>
+
+  <div id="tab-entrar" class="tab-panel">
+    <div class="auth-grid">
+      <div class="auth-panel">
+        <h2>Entrar na minha conta</h2>
+        <div class="field"><label>E-mail</label><input type="email" placeholder="seu@email.com"></div>
+        <div class="field"><label>Senha</label><input type="password" placeholder="••••••••"></div>
+        <button class="btn btn-wine btn-block">Entrar</button>
+        <a href="#" class="auth-link">Esqueci minha senha</a>
+      </div>
+      <div class="auth-panel" style="background:var(--bone-2);border-color:var(--line)">
+        <h2>Ainda não tem conta?</h2>
+        <p style="color:var(--ink-soft);margin-bottom:1.2rem">Cadastre-se para acompanhar pedidos, salvar favoritos e ter uma experiência de compra mais rápida.</p>
+        <button class="btn btn-outline btn-block" data-goto="cadastrar">Criar minha conta</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-cadastrar" class="tab-panel" style="display:none">
+    <div class="auth-panel" style="max-width:560px;margin-inline:auto">
+      <h2>Criar minha conta</h2>
+      <div class="form-grid">
+        <div class="field full"><label>Nome completo</label><input type="text" placeholder="Seu nome"></div>
+        <div class="field full"><label>E-mail</label><input type="email" placeholder="seu@email.com"></div>
+        <div class="field"><label>Senha</label><input type="password" placeholder="••••••••"></div>
+        <div class="field"><label>Confirmar senha</label><input type="password" placeholder="••••••••"></div>
+      </div>
+      <button class="btn btn-wine btn-block" style="margin-top:1.2rem">Criar conta</button>
+    </div>
+  </div>
+
+  <div id="tab-favoritos" class="tab-panel" style="display:none">
+    <div class="product-grid" id="favGrid"></div>
+    <p id="favEmpty" style="display:none;color:var(--ink-soft);text-align:center;padding:3rem 0">Você ainda não favoritou nenhuma peça.</p>
+  </div>
+
+  <div id="tab-pedidos" class="tab-panel" style="display:none">
+    <table class="orders-table">
+      <thead><tr><th>Pedido</th><th>Data</th><th>Status</th><th>Total</th></tr></thead>
+      <tbody>
+        <tr><td>#UGC-10234</td><td>18/08/2026</td><td><span class="status-pill">Entregue</span></td><td>R$ 429,90</td></tr>
+        <tr><td>#UGC-10198</td><td>02/08/2026</td><td><span class="status-pill">Em trânsito</span></td><td>R$ 609,80</td></tr>
+        <tr><td>#UGC-10122</td><td>14/07/2026</td><td><span class="status-pill">Entregue</span></td><td>R$ 259,90</td></tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+
+<footer class="site-footer" id="footerMount"></footer>
+
+<script src="assets/js/products.js"></script>
+<script src="assets/js/cart.js"></script>
+<script src="assets/js/ui.js"></script>
+<script>
+  mountLayout();
+
+  function showTab(name){
+    document.querySelectorAll(".tab-panel").forEach(p => p.style.display = "none");
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.tab === name));
+    document.getElementById(`tab-${name}`).style.display = "block";
+    if (name === "favoritos") renderFavorites();
+  }
+
+  function renderFavorites(){
+    const favs = getFavorites();
+    const grid = document.getElementById("favGrid");
+    const empty = document.getElementById("favEmpty");
+    if (favs.length === 0){ grid.innerHTML = ""; empty.style.display = "block"; return; }
+    empty.style.display = "none";
+    grid.innerHTML = favs.map(id => getProductById(id)).filter(Boolean).map(productCardHTML).join("");
+  }
+
+  document.querySelectorAll(".tab-btn").forEach(btn => btn.addEventListener("click", () => showTab(btn.dataset.tab)));
+  document.querySelectorAll("[data-goto]").forEach(btn => btn.addEventListener("click", () => showTab(btn.dataset.goto)));
+
+  const initialTab = new URLSearchParams(location.search).get("tab");
+  if (initialTab) showTab(initialTab);
+</script>
+</body>
+</html>

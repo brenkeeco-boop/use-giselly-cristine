@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sacola — Use Giselly Cristine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/tokens.css" />
+<link rel="stylesheet" href="assets/css/layout.css" />
+<link rel="stylesheet" href="assets/css/components.css" />
+</head>
+<body>
+
+<div id="headerMount"></div>
+
+<main class="wrap">
+  <p class="breadcrumb"><a href="index.html">Início</a><span class="sep">/</span><span>Sacola</span></p>
+  <h1 style="font-size:var(--step-3);font-style:italic;margin-top:.5rem">Sua sacola</h1>
+
+  <div id="cartContent"></div>
+</main>
+
+<footer class="site-footer" id="footerMount"></footer>
+
+<script src="assets/js/products.js"></script>
+<script src="assets/js/cart.js"></script>
+<script src="assets/js/ui.js"></script>
+<script>
+  mountLayout();
+
+  function renderCartPage(){
+    const cart = getCart();
+    const el = document.getElementById("cartContent");
+    if (cart.length === 0){
+      el.innerHTML = `
+        <div class="empty-state">
+          <h2>Sua sacola está vazia</h2>
+          <p>Explore nossos lançamentos e encontre a próxima peça favorita.</p>
+          <a href="catalogo.html?cat=novidades" class="btn btn-wine">Ver novidades</a>
+        </div>`;
+      return;
+    }
+
+    const rows = cart.map((item, idx) => {
+      const p = getProductById(item.productId);
+      if (!p) return "";
+      return `
+      <div class="cart-row">
+        <div class="cr-product">
+          <img src="${p.images[0]}" alt="${p.name}">
+          <div>
+            <a href="produto.html?id=${p.id}" class="cr-name">${p.name}</a>
+            <div class="cr-meta">Tam. ${item.size} · ${item.color}</div>
+            <button class="cr-remove" data-remove="${idx}">remover</button>
+          </div>
+        </div>
+        <div class="qty-box">
+          <button data-qty-minus="${idx}">${ICONS.minus}</button>
+          <span>${item.qty}</span>
+          <button data-qty-plus="${idx}">${ICONS.plus}</button>
+        </div>
+        <div>${formatBRL(p.price)}</div>
+        <div><strong>${formatBRL(p.price * item.qty)}</strong></div>
+      </div>`;
+    }).join("");
+
+    const subtotal = cartSubtotal();
+    const frete = subtotal >= 399 || subtotal === 0 ? 0 : 24.90;
+
+    document.getElementById("cartContent").innerHTML = `
+      <div class="cart-page">
+        <div>
+          <div class="cart-table-head"><span>Produto</span><span>Quantidade</span><span>Preço unit.</span><span>Total</span></div>
+          ${rows}
+        </div>
+        <div class="summary-box">
+          <h3>Resumo do pedido</h3>
+          <div class="shipping-calc">
+            <input type="text" placeholder="Seu CEP" />
+            <button class="btn btn-outline">Calcular</button>
+          </div>
+          <div class="summary-row"><span>Subtotal</span><span>${formatBRL(subtotal)}</span></div>
+          <div class="summary-row"><span>Frete estimado</span><span>${frete === 0 ? "Grátis" : formatBRL(frete)}</span></div>
+          <div class="summary-row total"><span>Total</span><span>${formatBRL(subtotal + frete)}</span></div>
+          <a href="checkout.html" class="btn btn-wine btn-block">Finalizar compra</a>
+          <a href="catalogo.html" class="btn btn-outline btn-block" style="margin-top:.6rem">Continuar comprando</a>
+        </div>
+      </div>`;
+  }
+
+  renderCartPage();
+
+  document.getElementById("cartContent").addEventListener("click", (e) => {
+    const minus = e.target.closest("[data-qty-minus]");
+    const plus = e.target.closest("[data-qty-plus]");
+    const remove = e.target.closest("[data-remove]");
+    if (minus){ const i = +minus.dataset.qtyMinus; updateCartQty(i, getCart()[i].qty - 1); renderCartPage(); }
+    if (plus){ const i = +plus.dataset.qtyPlus; updateCartQty(i, getCart()[i].qty + 1); renderCartPage(); }
+    if (remove){ removeFromCart(+remove.dataset.remove); renderCartPage(); }
+  });
+</script>
+</body>
+</html>

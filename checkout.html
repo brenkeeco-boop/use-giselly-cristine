@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Checkout — Use Giselly Cristine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/tokens.css" />
+<link rel="stylesheet" href="assets/css/layout.css" />
+<link rel="stylesheet" href="assets/css/components.css" />
+</head>
+<body>
+
+<div id="headerMount"></div>
+
+<main class="wrap">
+  <p class="breadcrumb"><a href="index.html">Início</a><span class="sep">/</span><a href="carrinho.html">Sacola</a><span class="sep">/</span><span>Checkout</span></p>
+
+  <div class="checkout-steps">
+    <div class="step active"><span class="num">1</span> Dados pessoais</div>
+    <div class="step"><span class="num">2</span> Endereço</div>
+    <div class="step"><span class="num">3</span> Entrega</div>
+    <div class="step"><span class="num">4</span> Pagamento</div>
+  </div>
+
+  <div class="checkout-layout">
+    <div>
+      <div class="form-card">
+        <h3>Dados pessoais</h3>
+        <div class="form-grid">
+          <div class="field"><label>Nome completo</label><input type="text" placeholder="Seu nome"></div>
+          <div class="field"><label>CPF</label><input type="text" placeholder="000.000.000-00"></div>
+          <div class="field"><label>E-mail</label><input type="email" placeholder="seu@email.com"></div>
+          <div class="field"><label>Telefone</label><input type="text" placeholder="(00) 00000-0000"></div>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <h3>Endereço de entrega</h3>
+        <div class="form-grid">
+          <div class="field"><label>CEP</label><input type="text" placeholder="00000-000"></div>
+          <div class="field"><label>Cidade</label><input type="text" placeholder="Sua cidade"></div>
+          <div class="field full"><label>Endereço</label><input type="text" placeholder="Rua, número"></div>
+          <div class="field"><label>Complemento</label><input type="text" placeholder="Apto, bloco (opcional)"></div>
+          <div class="field"><label>Bairro</label><input type="text" placeholder="Bairro"></div>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <h3>Forma de entrega</h3>
+        <div class="pay-options">
+          <label class="pay-opt"><input type="radio" name="shipping" checked> Padrão — 5 a 12 dias úteis — Grátis</label>
+          <label class="pay-opt"><input type="radio" name="shipping"> Expressa — 2 a 4 dias úteis — R$ 34,90</label>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <h3>Forma de pagamento</h3>
+        <div class="pay-options">
+          <label class="pay-opt"><input type="radio" name="payment" checked> Pix — 10% de desconto</label>
+          <label class="pay-opt"><input type="radio" name="payment"> Cartão de crédito — em até 6x sem juros</label>
+          <label class="pay-opt"><input type="radio" name="payment"> Boleto bancário</label>
+        </div>
+        <div class="form-grid" id="cardFields" style="display:none;margin-top:1rem">
+          <div class="field full"><label>Número do cartão</label><input type="text" placeholder="0000 0000 0000 0000"></div>
+          <div class="field"><label>Validade</label><input type="text" placeholder="MM/AA"></div>
+          <div class="field"><label>CVV</label><input type="text" placeholder="000"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="summary-box">
+      <h3>Resumo do pedido</h3>
+      <div id="orderMini" class="order-summary-mini"></div>
+      <div class="summary-row" style="margin-top:1rem"><span>Subtotal</span><span id="sumSubtotal"></span></div>
+      <div class="summary-row"><span>Frete</span><span id="sumFrete"></span></div>
+      <div class="summary-row total"><span>Total</span><span id="sumTotal"></span></div>
+      <button class="btn btn-wine btn-block" id="placeOrderBtn">Confirmar pedido</button>
+      <p class="label" style="text-align:center;margin-top:.8rem">Ambiente de demonstração — nenhum pagamento é processado.</p>
+    </div>
+  </div>
+</main>
+
+<footer class="site-footer" id="footerMount"></footer>
+
+<script src="assets/js/products.js"></script>
+<script src="assets/js/cart.js"></script>
+<script src="assets/js/ui.js"></script>
+<script>
+  mountLayout();
+  const cart = getCart();
+  const subtotal = cartSubtotal();
+  const frete = subtotal >= 399 || subtotal === 0 ? 0 : 24.90;
+
+  document.getElementById("orderMini").innerHTML = cart.map(item => {
+    const p = getProductById(item.productId);
+    if (!p) return "";
+    return `<div class="cr-mini"><img src="${p.images[0]}" alt=""><div><div>${p.name}</div><div style="color:var(--ink-soft)">Tam. ${item.size} · ${item.qty}x</div></div></div>`;
+  }).join("") || `<p style="color:var(--ink-soft);font-size:.85rem">Sua sacola está vazia.</p>`;
+
+  document.getElementById("sumSubtotal").textContent = formatBRL(subtotal);
+  document.getElementById("sumFrete").textContent = frete === 0 ? "Grátis" : formatBRL(frete);
+  document.getElementById("sumTotal").textContent = formatBRL(subtotal + frete);
+
+  document.querySelectorAll('input[name="payment"]').forEach(r => {
+    r.addEventListener("change", (e) => {
+      document.getElementById("cardFields").style.display = e.target.parentElement.textContent.includes("crédito") ? "grid" : "none";
+    });
+  });
+
+  document.getElementById("placeOrderBtn").addEventListener("click", () => {
+    alert("Pedido de demonstração recebido! Nenhum pagamento real foi processado — esta etapa será conectada ao backend futuramente.");
+  });
+</script>
+</body>
+</html>
