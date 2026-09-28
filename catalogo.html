@@ -98,7 +98,9 @@
 
   function draw(){
     document.getElementById("resultCount").textContent = `${list.length} peça${list.length !== 1 ? "s" : ""}`;
-    document.getElementById("productGrid").innerHTML = list.slice(0, visible).map(productCardHTML).join("");
+    document.getElementById("productGrid").innerHTML = list.length
+      ? list.slice(0, visible).map(productCardHTML).join("")
+      : `<div class="catalog-empty"><h2>Nenhuma peça encontrada</h2><p>Revise os filtros selecionados para ver outras opções.</p></div>`;
     document.getElementById("loadMoreBtn").style.display = visible >= list.length ? "none" : "inline-flex";
   }
   draw();

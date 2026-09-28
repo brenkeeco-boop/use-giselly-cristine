@@ -65,12 +65,12 @@
       <div class="pd-option">
         <div class="opt-head"><span>Cor: <strong id="colorLabel">${product.colors[0].name}</strong></span></div>
         <div class="swatch-row" id="colorRow">
-          ${product.colors.map((c,i) => `<span class="swatch ${i===0?'selected':''}" style="background:${c.hex};${i===0?'outline:2px solid var(--ink);outline-offset:2px':''}" data-color="${c.name}"></span>`).join("")}
+          ${product.colors.map((c,i) => `<button type="button" class="swatch ${i===0?'selected':''}" style="background:${c.hex}" data-color="${c.name}" aria-label="Selecionar cor ${c.name}" aria-pressed="${i===0}"></button>`).join("")}
         </div>
       </div>
 
       <div class="pd-option">
-        <div class="opt-head"><span>Tamanho</span><a href="#" class="guide-link" id="sizeGuideLink">guia de medidas</a></div>
+        <div class="opt-head"><span>Tamanho</span><a href="#" class="guide-link" id="sizeGuideLink" data-open-size-guide>guia de medidas</a></div>
         <div class="size-row" id="sizeRow">
           ${product.sizes.map((s,i) => `<button class="size-opt ${i===0?'selected':''}" data-size="${s}">${s}</button>`).join("")}
         </div>
@@ -78,7 +78,7 @@
 
       <div class="pd-actions">
         <button class="btn btn-wine" id="addToCartBtn">Adicionar ao carrinho</button>
-        <button class="fav-btn-lg" id="favBtnLg" data-fav="${product.id}">${ICONS.heart}</button>
+        <button class="fav-btn-lg" id="favBtnLg" data-fav="${product.id}" aria-label="Favoritar ${product.name}">${ICONS.heart}</button>
       </div>
 
       <div class="pd-info-list">
@@ -108,9 +108,9 @@
     }
     const colorSw = e.target.closest("#colorRow .swatch");
     if (colorSw){
-      document.querySelectorAll("#colorRow .swatch").forEach(s => s.style.outline = "none");
-      colorSw.style.outline = "2px solid var(--ink)";
-      colorSw.style.outlineOffset = "2px";
+      document.querySelectorAll("#colorRow .swatch").forEach(s => { s.classList.remove("selected"); s.setAttribute("aria-pressed", "false"); });
+      colorSw.classList.add("selected");
+      colorSw.setAttribute("aria-pressed", "true");
       document.getElementById("colorLabel").textContent = colorSw.dataset.color;
     }
     const sizeBtn = e.target.closest("#sizeRow .size-opt");

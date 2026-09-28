@@ -22,15 +22,6 @@ function headerTemplate(){
   <header class="site-header">
     <div class="wrap header-row">
       <button class="menu-toggle" id="menuToggle" aria-label="Abrir menu" aria-controls="mobileNav" aria-expanded="false">${ICONS.menu}</button>
-      <nav class="nav-primary">
-        <a href="catalogo.html?cat=novidades">Novidades</a>
-        <a href="catalogo.html?cat=vestidos">Vestidos</a>
-        <a href="catalogo.html?cat=conjuntos">Conjuntos</a>
-        <a href="catalogo.html?cat=blusas">Blusas</a>
-        <a href="catalogo.html?cat=calcas">Calças</a>
-        <a href="catalogo.html?cat=saias">Saias</a>
-        <a href="catalogo.html?cat=promocoes">Promoções</a>
-      </nav>
       <a href="index.html" class="brand">use <span>giselly cristine</span></a>
       <div class="header-actions">
         <button class="icon-btn" id="searchToggle" aria-label="Abrir busca" aria-controls="searchLine" aria-expanded="false">${ICONS.search}</button>
@@ -59,6 +50,7 @@ function headerTemplate(){
     </div>
     <div class="mobile-nav-links">
       <a href="catalogo.html?cat=novidades">Novidades</a>
+      <a href="catalogo.html">Todos os produtos</a>
       <a href="catalogo.html?cat=vestidos">Vestidos</a>
       <a href="catalogo.html?cat=conjuntos">Conjuntos</a>
       <a href="catalogo.html?cat=blusas">Blusas</a>
@@ -76,7 +68,20 @@ function headerTemplate(){
     </div>
     <div class="cart-drawer-body" id="cartDrawerBody"></div>
     <div class="cart-drawer-foot" id="cartDrawerFoot"></div>
-  </aside>`;
+  </aside>
+
+  <div class="guide-modal" id="sizeGuideModal" role="dialog" aria-modal="true" aria-labelledby="sizeGuideTitle" aria-hidden="true">
+    <div class="guide-modal-card">
+      <div class="guide-modal-head">
+        <h3 id="sizeGuideTitle">Guia de medidas</h3>
+        <button type="button" id="sizeGuideClose" aria-label="Fechar guia de medidas">${ICONS.close}</button>
+      </div>
+      <div class="guide-modal-content">
+        <p>As medidas específicas de cada peça serão disponibilizadas aqui em breve.</p>
+        <p>Enquanto isso, consulte a descrição do produto e escolha o tamanho com o qual você já se sente confortável.</p>
+      </div>
+    </div>
+  </div>`;
 }
 
 function footerTemplate(){
@@ -158,7 +163,7 @@ function renderCartDrawer(){
   if (!body) return;
   const cart = getCart();
   if (cart.length === 0){
-    body.innerHTML = `<p style="color:var(--ink-soft);font-size:.9rem">Sua sacola está vazia.</p>`;
+    body.innerHTML = `<div class="drawer-empty"><span class="drawer-empty-mark">○</span><p>Sua sacola está vazia.</p><small>Encontre uma peça que combine com você.</small></div>`;
     foot.innerHTML = `<a href="catalogo.html" class="btn btn-block">Ver novidades</a>`;
     return;
   }
@@ -251,14 +256,37 @@ function bindLayoutEvents(){
   cartClose && cartClose.addEventListener("click", closeCart);
   mobileBackdrop && mobileBackdrop.addEventListener("click", closeCart);
 
+  const sizeGuideModal = document.getElementById("sizeGuideModal");
+  const sizeGuideClose = document.getElementById("sizeGuideClose");
+  const openSizeGuide = () => {
+    sizeGuideModal.classList.add("open");
+    sizeGuideModal.setAttribute("aria-hidden", "false");
+    document.body.classList.add("nav-is-open");
+    sizeGuideClose && sizeGuideClose.focus();
+  };
+  const closeSizeGuide = () => {
+    sizeGuideModal.classList.remove("open");
+    sizeGuideModal.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("nav-is-open");
+  };
+  sizeGuideClose && sizeGuideClose.addEventListener("click", closeSizeGuide);
+  sizeGuideModal && sizeGuideModal.addEventListener("click", (e) => { if (e.target === sizeGuideModal) closeSizeGuide(); });
+
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Escape") return;
     closeSearch();
     closeMobile();
     closeCart();
+    closeSizeGuide();
   });
 
   document.body.addEventListener("click", (e) => {
+    const sizeGuide = e.target.closest("[data-open-size-guide]");
+    if (sizeGuide){
+      e.preventDefault();
+      openSizeGuide();
+      return;
+    }
     const favBtn = e.target.closest("[data-fav]");
     if (favBtn){
       const active = toggleFavorite(favBtn.dataset.fav);
@@ -297,7 +325,7 @@ function mountLayout(activeCategory){
   document.getElementById("headerMount").innerHTML = headerTemplate();
   document.getElementById("footerMount").innerHTML = footerTemplate();
   if (activeCategory){
-    document.querySelectorAll(`.nav-primary a[href*="cat=${activeCategory}"]`).forEach(a => a.classList.add("active"));
+    document.querySelectorAll(`.mobile-nav-links a[href*="cat=${activeCategory}"]`).forEach(a => a.classList.add("active"));
   }
   bindLayoutEvents();
   updateCartCount();

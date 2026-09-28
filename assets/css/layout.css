@@ -252,3 +252,37 @@
   .cart-drawer-body{ padding-inline:var(--sp-2); }
   .cart-drawer-foot{ padding:var(--sp-2); }
 }
+
+/* ===== menu único e guia de medidas ===== */
+.header-row{ grid-template-columns:1fr auto 1fr; }
+.menu-toggle{ display:inline-flex; align-items:center; justify-content:center; grid-column:1; width:2.5rem; height:2.5rem; background:transparent; border:1px solid transparent; border-radius:50%; color:var(--ink); transition:color var(--dur) var(--ease),background var(--dur) var(--ease),transform var(--dur) var(--ease); }
+.menu-toggle svg{ width:1.28rem; height:1.28rem; }
+.menu-toggle:hover{ color:var(--wine); background:var(--bone-2); }
+.menu-toggle:active{ transform:scale(.96); }
+.mobile-nav{ width:min(390px,92vw); }
+.mobile-nav-links a.active{ color:var(--wine); padding-left:.35rem; }
+.drawer-empty{ display:grid; place-items:center; min-height:100%; padding:var(--sp-5) var(--sp-2); text-align:center; color:var(--ink-soft); }
+.drawer-empty-mark{ display:grid; place-items:center; width:3rem; height:3rem; margin-bottom:var(--sp-2); border:1px solid var(--line); border-radius:50%; color:var(--wine); font-size:1.5rem; }
+.drawer-empty p{ margin:0; color:var(--ink); font-family:var(--f-display); font-size:var(--step-2); font-style:italic; }
+.drawer-empty small{ margin-top:.35rem; }
+.guide-modal{ position:fixed; inset:0; z-index:100; display:grid; place-items:center; padding:var(--sp-3); background:rgba(34,28,25,.45); opacity:0; visibility:hidden; transition:opacity var(--dur) var(--ease),visibility 0s linear var(--dur); }
+.guide-modal.open{ opacity:1; visibility:visible; transition:opacity var(--dur) var(--ease); }
+.guide-modal-card{ width:min(480px,100%); background:var(--bone); border:1px solid var(--line); box-shadow:0 18px 44px rgba(34,28,25,.18); transform:translateY(10px); transition:transform var(--dur) var(--ease); }
+.guide-modal.open .guide-modal-card{ transform:translateY(0); }
+.guide-modal-head{ display:flex; align-items:center; justify-content:space-between; padding:var(--sp-3); border-bottom:1px solid var(--line); }
+.guide-modal-head h3{ font-size:var(--step-2); font-style:italic; }
+.guide-modal-content{ padding:var(--sp-3); color:var(--ink-soft); }
+.guide-modal-content p:first-child{ margin-top:0; }
+@media (max-width:480px){ .menu-toggle{ width:2.22rem; height:2.22rem; } .mobile-nav{ width:100%; } }
+
+/* ===== rodapé ===== */
+.site-footer{ margin-top:var(--sp-7); }
+.footer-grid{ gap:clamp(1.8rem,4vw,4rem); padding-block:var(--sp-6) var(--sp-5); }
+.footer-grid h4{ margin-bottom:var(--sp-3); }
+.footer-grid li{ margin-bottom:.7rem; }
+.footer-grid li a{ transition:color var(--dur) var(--ease),padding-left var(--dur) var(--ease); }
+.footer-grid li a:hover{ padding-left:.2rem; color:var(--camel-soft); }
+.social-row a{ border-radius:50%; transition:color var(--dur) var(--ease),border-color var(--dur) var(--ease),background var(--dur) var(--ease); }
+.social-row a:hover{ color:var(--ink); background:var(--camel); border-color:var(--camel); }
+.footer-bottom{ padding-block:var(--sp-3); }
+@media (max-width:600px){ .footer-grid{ grid-template-columns:1fr; padding-block:var(--sp-5); } .site-footer{ margin-top:var(--sp-6); } }
