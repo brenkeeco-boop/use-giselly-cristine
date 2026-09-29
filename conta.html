@@ -11,95 +11,67 @@
 <link rel="stylesheet" href="assets/css/components.css" />
 </head>
 <body>
-
 <div id="headerMount"></div>
-
 <main class="wrap">
   <p class="breadcrumb"><a href="index.html">Início</a><span class="sep">/</span><span>Minha conta</span></p>
-
-  <div class="account-tabs">
-    <button class="tab-btn active" data-tab="entrar">Entrar</button>
-    <button class="tab-btn" data-tab="cadastrar">Criar conta</button>
-    <button class="tab-btn" data-tab="favoritos">Favoritos</button>
-    <button class="tab-btn" data-tab="pedidos">Meus pedidos</button>
+  <div class="account-tabs" aria-label="Navegação da conta">
+    <button class="tab-btn active" type="button" data-tab="entrar" data-guest-only>Entrar</button>
+    <button class="tab-btn" type="button" data-tab="cadastrar" data-guest-only>Criar conta</button>
+    <button class="tab-btn" type="button" data-tab="perfil" data-auth-only hidden>Meu perfil</button>
+    <button class="tab-btn" type="button" data-tab="favoritos" data-auth-only hidden>Favoritos</button>
+    <button class="tab-btn" type="button" data-tab="pedidos" data-auth-only hidden>Meus pedidos</button>
   </div>
+  <p class="account-notice" id="accountNotice" role="status" aria-live="polite" hidden></p>
 
   <div id="tab-entrar" class="tab-panel">
     <div class="auth-grid">
-      <div class="auth-panel">
+      <form class="auth-panel" id="loginForm" novalidate>
         <h2>Entrar na minha conta</h2>
-        <div class="field"><label>E-mail</label><input type="email" placeholder="seu@email.com"></div>
-        <div class="field"><label>Senha</label><input type="password" placeholder="••••••••"></div>
-        <button class="btn btn-wine btn-block">Entrar</button>
-        <a href="#" class="auth-link">Esqueci minha senha</a>
-      </div>
-      <div class="auth-panel" style="background:var(--bone-2);border-color:var(--line)">
-        <h2>Ainda não tem conta?</h2>
-        <p style="color:var(--ink-soft);margin-bottom:1.2rem">Cadastre-se para acompanhar pedidos, salvar favoritos e ter uma experiência de compra mais rápida.</p>
-        <button class="btn btn-outline btn-block" data-goto="cadastrar">Criar minha conta</button>
-      </div>
+        <div class="field"><label for="loginEmail">E-mail</label><input id="loginEmail" type="email" autocomplete="email" placeholder="seu@email.com" required></div>
+        <div class="field"><label for="loginPassword">Senha</label><input id="loginPassword" type="password" autocomplete="current-password" placeholder="••••••••" required></div>
+        <button class="btn btn-wine btn-block" id="loginSubmit" type="submit">Entrar</button>
+        <a href="#" class="auth-link" aria-disabled="true">Esqueci minha senha</a>
+      </form>
+      <div class="auth-panel" style="background:var(--bone-2);border-color:var(--line)"><h2>Ainda não tem conta?</h2><p style="color:var(--ink-soft);margin-bottom:1.2rem">Cadastre-se para acompanhar pedidos, salvar favoritos e ter uma experiência de compra mais rápida.</p><button class="btn btn-outline btn-block" type="button" data-goto="cadastrar">Criar minha conta</button></div>
     </div>
   </div>
 
   <div id="tab-cadastrar" class="tab-panel" style="display:none">
-    <div class="auth-panel" style="max-width:560px;margin-inline:auto">
+    <form class="auth-panel" id="signupForm" style="max-width:560px;margin-inline:auto" novalidate>
       <h2>Criar minha conta</h2>
       <div class="form-grid">
-        <div class="field full"><label>Nome completo</label><input type="text" placeholder="Seu nome"></div>
-        <div class="field full"><label>E-mail</label><input type="email" placeholder="seu@email.com"></div>
-        <div class="field"><label>Senha</label><input type="password" placeholder="••••••••"></div>
-        <div class="field"><label>Confirmar senha</label><input type="password" placeholder="••••••••"></div>
+        <div class="field full"><label for="signupName">Nome completo</label><input id="signupName" type="text" autocomplete="name" placeholder="Seu nome" required></div>
+        <div class="field full"><label for="signupEmail">E-mail</label><input id="signupEmail" type="email" autocomplete="email" placeholder="seu@email.com" required></div>
+        <div class="field"><label for="signupPassword">Senha</label><input id="signupPassword" type="password" autocomplete="new-password" placeholder="••••••••" required></div>
+        <div class="field"><label for="signupPasswordConfirmation">Confirmar senha</label><input id="signupPasswordConfirmation" type="password" autocomplete="new-password" placeholder="••••••••" required></div>
       </div>
-      <button class="btn btn-wine btn-block" style="margin-top:1.2rem">Criar conta</button>
-    </div>
+      <button class="btn btn-wine btn-block" id="signupSubmit" type="submit" style="margin-top:1.2rem">Criar conta</button>
+    </form>
   </div>
 
-  <div id="tab-favoritos" class="tab-panel" style="display:none">
-    <div class="product-grid" id="favGrid"></div>
-    <p id="favEmpty" style="display:none;color:var(--ink-soft);text-align:center;padding:3rem 0">Você ainda não favoritou nenhuma peça.</p>
+  <div id="tab-perfil" class="tab-panel" data-auth-only="true" style="display:none">
+    <form class="auth-panel profile-panel" id="profileForm" novalidate>
+      <div class="profile-head"><div><h2>Meu perfil</h2><p>Atualize seus dados quando precisar.</p></div><button class="btn btn-outline" id="logoutBtn" type="button">Sair</button></div>
+      <div class="form-grid">
+        <div class="field full"><label for="profileName">Nome completo</label><input id="profileName" type="text" autocomplete="name" required></div>
+        <div class="field full"><label for="profileEmail">E-mail</label><input id="profileEmail" type="email" autocomplete="email" readonly></div>
+        <div class="field"><label for="profilePhone">Telefone</label><input id="profilePhone" type="tel" autocomplete="tel" placeholder="(00) 00000-0000"></div>
+        <div class="field"><label for="profileCpf">CPF</label><input id="profileCpf" type="text" inputmode="numeric" placeholder="000.000.000-00"></div>
+        <div class="field"><label for="profileBirthDate">Data de nascimento</label><input id="profileBirthDate" type="date" autocomplete="bday"></div>
+      </div>
+      <button class="btn btn-wine" id="profileSubmit" type="submit" style="margin-top:1.2rem">Salvar alterações</button>
+    </form>
   </div>
 
-  <div id="tab-pedidos" class="tab-panel" style="display:none">
-    <table class="orders-table">
-      <thead><tr><th>Pedido</th><th>Data</th><th>Status</th><th>Total</th></tr></thead>
-      <tbody>
-        <tr><td>#UGC-10234</td><td>18/08/2026</td><td><span class="status-pill">Entregue</span></td><td>R$ 429,90</td></tr>
-        <tr><td>#UGC-10198</td><td>02/08/2026</td><td><span class="status-pill">Em trânsito</span></td><td>R$ 609,80</td></tr>
-        <tr><td>#UGC-10122</td><td>14/07/2026</td><td><span class="status-pill">Entregue</span></td><td>R$ 259,90</td></tr>
-      </tbody>
-    </table>
-  </div>
+  <div id="tab-favoritos" class="tab-panel" data-auth-only="true" style="display:none"><div class="product-grid" id="favGrid"></div><p id="favEmpty" style="display:none;color:var(--ink-soft);text-align:center;padding:3rem 0">Você ainda não favoritou nenhuma peça.</p></div>
+  <div id="tab-pedidos" class="tab-panel" data-auth-only="true" style="display:none"><table class="orders-table"><thead><tr><th>Pedido</th><th>Data</th><th>Status</th><th>Total</th></tr></thead><tbody><tr><td>#UGC-10234</td><td>18/08/2026</td><td><span class="status-pill">Entregue</span></td><td>R$ 429,90</td></tr><tr><td>#UGC-10198</td><td>02/08/2026</td><td><span class="status-pill">Em trânsito</span></td><td>R$ 609,80</td></tr><tr><td>#UGC-10122</td><td>14/07/2026</td><td><span class="status-pill">Entregue</span></td><td>R$ 259,90</td></tr></tbody></table></div>
 </main>
-
 <footer class="site-footer" id="footerMount"></footer>
-
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="assets/js/products.js"></script>
 <script src="assets/js/cart.js"></script>
 <script src="assets/js/ui.js"></script>
-<script>
-  mountLayout();
-
-  function showTab(name){
-    document.querySelectorAll(".tab-panel").forEach(p => p.style.display = "none");
-    document.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.tab === name));
-    document.getElementById(`tab-${name}`).style.display = "block";
-    if (name === "favoritos") renderFavorites();
-  }
-
-  function renderFavorites(){
-    const favs = getFavorites();
-    const grid = document.getElementById("favGrid");
-    const empty = document.getElementById("favEmpty");
-    if (favs.length === 0){ grid.innerHTML = ""; empty.style.display = "block"; return; }
-    empty.style.display = "none";
-    grid.innerHTML = favs.map(id => getProductById(id)).filter(Boolean).map(productCardHTML).join("");
-  }
-
-  document.querySelectorAll(".tab-btn").forEach(btn => btn.addEventListener("click", () => showTab(btn.dataset.tab)));
-  document.querySelectorAll("[data-goto]").forEach(btn => btn.addEventListener("click", () => showTab(btn.dataset.goto)));
-
-  const initialTab = new URLSearchParams(location.search).get("tab");
-  if (initialTab) showTab(initialTab);
-</script>
+<script src="assets/js/supabase.js"></script>
+<script src="assets/js/account.js"></script>
 </body>
 </html>

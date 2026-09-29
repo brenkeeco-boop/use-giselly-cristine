@@ -329,3 +329,15 @@
   .cart-row{ padding:var(--sp-2); }
   .summary-box,.form-card,.auth-panel{ padding:var(--sp-3); }
 }
+
+/* ===== conta autenticada ===== */
+.account-notice{ margin:-.8rem 0 var(--sp-3); padding:.8rem 1rem; border:1px solid var(--line); font-size:var(--step--1); }
+.account-notice.success{ border-color:#789267; background:#f4f8f0; color:#35472c; }
+.account-notice.error{ border-color:#c68b82; background:#fff7f5; color:#7c2b23; }
+.profile-panel{ max-width:760px; margin-inline:auto; }
+.profile-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:var(--sp-3); margin-bottom:var(--sp-3); }
+.profile-head h2{ margin-bottom:.25rem; }
+.profile-head p{ margin:0; color:var(--ink-soft); }
+.profile-head .btn{ flex:0 0 auto; min-height:2.6rem; padding:.65rem 1.1rem; }
+.profile-panel input[readonly]{ background:var(--bone-2); color:var(--ink-soft); cursor:not-allowed; }
+@media (max-width:560px){ .profile-head{ align-items:stretch; flex-direction:column; } .profile-head .btn{ width:100%; } }
