@@ -93,14 +93,15 @@
 
   renderCartPage();
 
-  document.getElementById("cartContent").addEventListener("click", (e) => {
+  document.getElementById("cartContent").addEventListener("click", async (e) => {
     const minus = e.target.closest("[data-qty-minus]");
     const plus = e.target.closest("[data-qty-plus]");
     const remove = e.target.closest("[data-remove]");
-    if (minus){ const i = +minus.dataset.qtyMinus; updateCartQty(i, getCart()[i].qty - 1); renderCartPage(); }
-    if (plus){ const i = +plus.dataset.qtyPlus; updateCartQty(i, getCart()[i].qty + 1); renderCartPage(); }
-    if (remove){ removeFromCart(+remove.dataset.remove); renderCartPage(); }
+    if (minus){ const i = +minus.dataset.qtyMinus; await updateCartQty(i, getCart()[i].qty - 1); renderCartPage(); }
+    if (plus){ const i = +plus.dataset.qtyPlus; await updateCartQty(i, getCart()[i].qty + 1); renderCartPage(); }
+    if (remove){ await removeFromCart(+remove.dataset.remove); renderCartPage(); }
   });
+  document.addEventListener("ugc:cart-updated", renderCartPage);
 </script>
 </body>
 </html>

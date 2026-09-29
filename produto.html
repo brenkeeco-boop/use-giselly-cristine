@@ -122,10 +122,11 @@
     }
   });
 
-  document.getElementById("addToCartBtn").addEventListener("click", () => {
+  document.getElementById("addToCartBtn").addEventListener("click", async () => {
     const size = document.querySelector("#sizeRow .size-opt.selected").dataset.size;
     const color = document.getElementById("colorLabel").textContent;
-    addToCart(product.id, size, color, 1);
+    const added = await addToCart(product.id, size, color, 1);
+    if (!added) return;
     const btn = document.getElementById("addToCartBtn");
     btn.textContent = "Adicionado à sacola ✓";
     setTimeout(() => btn.textContent = "Adicionar ao carrinho", 1500);

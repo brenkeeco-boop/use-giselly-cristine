@@ -84,6 +84,13 @@ function headerTemplate(){
   </div>`;
 }
 
+function showStoreNotice(message, type = "info"){
+  let notice = document.getElementById("storeNotice");
+  if (!notice){ notice = document.createElement("div"); notice.id = "storeNotice"; notice.className = "store-notice"; notice.setAttribute("role", "status"); notice.setAttribute("aria-live", "polite"); document.body.appendChild(notice); }
+  notice.textContent = message; notice.className = `store-notice ${type} open`;
+  clearTimeout(showStoreNotice.timer); showStoreNotice.timer = setTimeout(() => notice.classList.remove("open"), 3600);
+}
+
 function footerTemplate(){
   return `
   <div class="wrap footer-grid">
@@ -280,7 +287,11 @@ function bindLayoutEvents(){
     closeSizeGuide();
   });
 
-  document.body.addEventListener("click", (e) => {
+  document.addEventListener("ugc:favorites-updated", () => {
+    document.querySelectorAll("[data-fav]").forEach(button => button.classList.toggle("active", isFavorite(button.dataset.fav)));
+  });
+
+  document.body.addEventListener("click", async (e) => {
     const sizeGuide = e.target.closest("[data-open-size-guide]");
     if (sizeGuide){
       e.preventDefault();
@@ -296,7 +307,8 @@ function bindLayoutEvents(){
     const quickAdd = e.target.closest("[data-quickadd]");
     if (quickAdd){
       const p = getProductById(quickAdd.dataset.quickadd);
-      addToCart(p.id, p.sizes[Math.floor(p.sizes.length/2)], p.colors[0].name, 1);
+      const added = await addToCart(p.id, p.sizes[Math.floor(p.sizes.length/2)], p.colors[0].name, 1);
+      if (!added) return;
       quickAdd.textContent = "Adicionado ✓";
       setTimeout(() => quickAdd.textContent = "Adicionar à sacola", 1400);
     }
@@ -304,20 +316,17 @@ function bindLayoutEvents(){
     if (qtyMinus){
       const idx = +qtyMinus.dataset.qtyMinus;
       const cart = getCart();
-      updateCartQty(idx, cart[idx].qty - 1);
-      renderCartDrawer();
+      updateCartQty(idx, cart[idx].qty - 1).then(renderCartDrawer);
     }
     const qtyPlus = e.target.closest("[data-qty-plus]");
     if (qtyPlus){
       const idx = +qtyPlus.dataset.qtyPlus;
       const cart = getCart();
-      updateCartQty(idx, cart[idx].qty + 1);
-      renderCartDrawer();
+      updateCartQty(idx, cart[idx].qty + 1).then(renderCartDrawer);
     }
     const remove = e.target.closest("[data-remove]");
     if (remove){
-      removeFromCart(+remove.dataset.remove);
-      renderCartDrawer();
+      removeFromCart(+remove.dataset.remove).then(renderCartDrawer);
     }
   });
 }

@@ -41,6 +41,13 @@ function setAccountState(user){
   document.querySelectorAll("[data-guest-only]").forEach(el => el.hidden = Boolean(currentUser));
   const accountLink = document.querySelector('a[aria-label="Conta"]');
   if (accountLink) accountLink.setAttribute("aria-label", currentUser ? "Minha conta" : "Conta");
+  if (!currentUser){
+    ["profileName","profileEmail","profilePhone","profileCpf","profileBirthDate"].forEach(id => { const field = document.getElementById(id); if (field) field.value = ""; });
+    const addresses = document.getElementById("addressList"); if (addresses) addresses.innerHTML = "";
+    const favorites = document.getElementById("favGrid"); if (favorites) favorites.innerHTML = "";
+    const orders = document.getElementById("ordersBody"); if (orders) orders.innerHTML = "";
+    if (window.clearCustomerCache) clearCustomerCache();
+  }
 }
 
 async function loadProfile(user){
@@ -191,6 +198,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     clearNotice();
     const { error } = await supabaseClient.auth.signOut();
     if (error) return showNotice("Não foi possível sair da conta. Tente novamente.", "error");
+    clearCustomerCache();
     showNotice("Você saiu da sua conta.", "success");
   });
 
