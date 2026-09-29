@@ -30,6 +30,9 @@ function showTab(name){
   document.querySelectorAll(".tab-btn").forEach(button => button.classList.toggle("active", button.dataset.tab === name));
   document.getElementById(`tab-${name}`).style.display = "block";
   if (name === "favoritos") renderFavorites();
+  if (name === "enderecos") loadAddresses();
+  if (name === "pedidos") loadOrders();
+  if (name === "preferencias") loadPreferences();
 }
 
 function setAccountState(user){
@@ -62,12 +65,53 @@ async function loadProfile(user){
 async function handleSession(session){
   setAccountState(session?.user);
   if (session?.user){
+    try { await syncCloudCartToLocal(); await syncCloudFavoritesToLocal(); } catch {}
     await loadProfile(session.user);
     const requestedTab = new URLSearchParams(location.search).get("tab");
     showTab(requestedTab === "favoritos" ? "favoritos" : "perfil");
   } else {
     showTab(new URLSearchParams(location.search).get("tab") === "cadastrar" ? "cadastrar" : "entrar");
   }
+}
+
+function resetAddressForm(){
+  document.getElementById("addressForm").reset();
+  document.getElementById("addressId").value = "";
+  document.getElementById("addressFormTitle").textContent = "Novo endereço";
+}
+
+function addressCard(address){
+  return `<article class="address-card">
+    <div><div class="address-card-head"><strong>${address.identificacao || "Endereço"}</strong>${address.principal ? '<span class="status-pill">Principal</span>' : ""}</div>
+    <p>${address.nome_destinatario}<br>${address.rua}, ${address.numero}${address.complemento ? ` · ${address.complemento}` : ""}<br>${address.bairro} · ${address.cidade}/${address.estado}<br>CEP ${address.cep}</p></div>
+    <div class="address-actions"><button type="button" class="auth-link" data-address-edit="${address.id}">Editar</button>${address.principal ? "" : `<button type="button" class="auth-link" data-address-main="${address.id}">Tornar principal</button>`}<button type="button" class="auth-link danger-link" data-address-delete="${address.id}">Excluir</button></div>
+  </article>`;
+}
+
+async function loadAddresses(){
+  if (!currentUser) return;
+  const { data, error } = await supabaseClient.from("enderecos").select("*").eq("usuario_id", currentUser.id).order("principal", { ascending:false }).order("criado_em", { ascending:false });
+  if (error) return showNotice("Não foi possível carregar seus endereços.", "error");
+  const list = document.getElementById("addressList");
+  list.innerHTML = data.length ? data.map(addressCard).join("") : '<p class="account-empty">Você ainda não cadastrou um endereço.</p>';
+  list.dataset.addresses = JSON.stringify(data);
+}
+
+async function loadOrders(){
+  if (!currentUser) return;
+  const { data, error } = await supabaseClient.from("pedidos").select("id,numero_pedido,status,total,criado_em").eq("usuario_id", currentUser.id).order("criado_em", { ascending:false });
+  if (error) return showNotice("Não foi possível carregar seus pedidos.", "error");
+  document.getElementById("ordersBody").innerHTML = data.map(order => `<tr><td>${order.numero_pedido || `#${order.id.slice(0,8)}`}</td><td>${new Date(order.criado_em).toLocaleDateString("pt-BR")}</td><td><span class="status-pill">${order.status.replaceAll("_", " ")}</span></td><td>${formatBRL(Number(order.total))}</td></tr>`).join("");
+  document.getElementById("ordersEmpty").style.display = data.length ? "none" : "block";
+}
+
+async function loadPreferences(){
+  if (!currentUser) return;
+  const { data, error } = await supabaseClient.from("preferencias_cliente").select("receber_ofertas,receber_novidades,receber_notificacoes_pedido").eq("usuario_id", currentUser.id).maybeSingle();
+  if (error) return showNotice("Não foi possível carregar suas preferências.", "error");
+  document.getElementById("offersPreference").checked = data?.receber_ofertas ?? true;
+  document.getElementById("newsPreference").checked = data?.receber_novidades ?? true;
+  document.getElementById("ordersPreference").checked = data?.receber_notificacoes_pedido ?? true;
 }
 
 function renderFavorites(){
@@ -95,6 +139,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
     button.disabled = false;
     if (error) showNotice(authMessage(error), "error");
+    else {
+      const returnTo = new URLSearchParams(location.search).get("returnTo");
+      if (returnTo) location.assign(returnTo);
+    }
   });
 
   document.getElementById("signupForm").addEventListener("submit", async (event) => {
@@ -144,6 +192,34 @@ document.addEventListener("DOMContentLoaded", async () => {
     const { error } = await supabaseClient.auth.signOut();
     if (error) return showNotice("Não foi possível sair da conta. Tente novamente.", "error");
     showNotice("Você saiu da sua conta.", "success");
+  });
+
+  document.getElementById("addressForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!currentUser) return showTab("entrar");
+    const id = document.getElementById("addressId").value;
+    const payload = {
+      usuario_id:currentUser.id, identificacao:document.getElementById("addressLabel").value.trim() || null,
+      nome_destinatario:document.getElementById("addressRecipient").value.trim(), cep:document.getElementById("addressCep").value.trim(), rua:document.getElementById("addressStreet").value.trim(), numero:document.getElementById("addressNumber").value.trim(), complemento:document.getElementById("addressComplement").value.trim() || null, bairro:document.getElementById("addressDistrict").value.trim(), cidade:document.getElementById("addressCity").value.trim(), estado:document.getElementById("addressState").value.trim(), referencia:document.getElementById("addressReference").value.trim() || null, atualizado_em:new Date().toISOString()
+    };
+    const query = id ? supabaseClient.from("enderecos").update(payload).eq("id", id).eq("usuario_id", currentUser.id) : supabaseClient.from("enderecos").insert(payload);
+    const { error } = await query;
+    if (error) return showNotice("Não foi possível salvar o endereço.", "error");
+    resetAddressForm(); await loadAddresses(); showNotice("Endereço salvo com sucesso.", "success");
+  });
+  document.getElementById("addressCancel").addEventListener("click", resetAddressForm);
+  document.getElementById("addressList").addEventListener("click", async (event) => {
+    const edit = event.target.closest("[data-address-edit]"); const main = event.target.closest("[data-address-main]"); const remove = event.target.closest("[data-address-delete]");
+    const addresses = JSON.parse(document.getElementById("addressList").dataset.addresses || "[]");
+    if (edit){ const address = addresses.find(item => item.id === edit.dataset.addressEdit); if (!address) return; document.getElementById("addressId").value = address.id; document.getElementById("addressFormTitle").textContent = "Editar endereço"; document.getElementById("addressLabel").value = address.identificacao || ""; document.getElementById("addressRecipient").value = address.nome_destinatario; document.getElementById("addressCep").value = address.cep; document.getElementById("addressStreet").value = address.rua; document.getElementById("addressNumber").value = address.numero; document.getElementById("addressComplement").value = address.complemento || ""; document.getElementById("addressDistrict").value = address.bairro; document.getElementById("addressCity").value = address.cidade; document.getElementById("addressState").value = address.estado; document.getElementById("addressReference").value = address.referencia || ""; document.getElementById("addressForm").scrollIntoView({ behavior:"smooth", block:"start" }); }
+    if (main){ const { error:firstError } = await supabaseClient.from("enderecos").update({ principal:false, atualizado_em:new Date().toISOString() }).eq("usuario_id", currentUser.id); if (firstError) return showNotice("Não foi possível definir o endereço principal.", "error"); const { error } = await supabaseClient.from("enderecos").update({ principal:true, atualizado_em:new Date().toISOString() }).eq("id", main.dataset.addressMain).eq("usuario_id", currentUser.id); if (error) return showNotice("Não foi possível definir o endereço principal.", "error"); await loadAddresses(); showNotice("Endereço principal atualizado.", "success"); }
+    if (remove){ const { error } = await supabaseClient.from("enderecos").delete().eq("id", remove.dataset.addressDelete).eq("usuario_id", currentUser.id); if (error) return showNotice("Não foi possível excluir o endereço.", "error"); await loadAddresses(); showNotice("Endereço excluído.", "success"); }
+  });
+  document.getElementById("preferencesForm").addEventListener("submit", async (event) => {
+    event.preventDefault(); if (!currentUser) return;
+    const { error } = await supabaseClient.from("preferencias_cliente").upsert({ usuario_id:currentUser.id, receber_ofertas:document.getElementById("offersPreference").checked, receber_novidades:document.getElementById("newsPreference").checked, receber_notificacoes_pedido:document.getElementById("ordersPreference").checked, atualizado_em:new Date().toISOString() });
+    if (error) return showNotice("Não foi possível salvar suas preferências.", "error");
+    showNotice("Preferências atualizadas com sucesso.", "success");
   });
 
   const { data: { session } } = await supabaseClient.auth.getSession();

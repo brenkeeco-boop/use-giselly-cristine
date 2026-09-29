@@ -289,8 +289,9 @@ function bindLayoutEvents(){
     }
     const favBtn = e.target.closest("[data-fav]");
     if (favBtn){
-      const active = toggleFavorite(favBtn.dataset.fav);
-      favBtn.classList.toggle("active", active);
+      toggleFavorite(favBtn.dataset.fav).then(active => {
+        if (active !== null) favBtn.classList.toggle("active", active);
+      });
     }
     const quickAdd = e.target.closest("[data-quickadd]");
     if (quickAdd){

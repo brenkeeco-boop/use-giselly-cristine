@@ -341,3 +341,14 @@
 .profile-head .btn{ flex:0 0 auto; min-height:2.6rem; padding:.65rem 1.1rem; }
 .profile-panel input[readonly]{ background:var(--bone-2); color:var(--ink-soft); cursor:not-allowed; }
 @media (max-width:560px){ .profile-head{ align-items:stretch; flex-direction:column; } .profile-head .btn{ width:100%; } }
+
+/* ===== dados do cliente ===== */
+.address-list{ display:grid; gap:var(--sp-2); margin-bottom:var(--sp-4); }
+.address-card{ display:flex; align-items:flex-start; justify-content:space-between; gap:var(--sp-3); border:1px solid var(--line); padding:var(--sp-3); background:var(--white); }
+.address-card-head{ display:flex; align-items:center; gap:.6rem; }
+.address-card p{ margin:.45rem 0 0; color:var(--ink-soft); font-size:var(--step--1); line-height:1.65; }
+.address-actions{ display:flex; flex-wrap:wrap; justify-content:flex-end; gap:.8rem; }
+.address-actions .auth-link{ margin:0; white-space:nowrap; }
+.danger-link{ color:var(--error); }
+.account-empty{ margin:0; padding:var(--sp-4); text-align:center; color:var(--ink-soft); background:var(--bone-2); }
+@media (max-width:600px){ .address-card{ flex-direction:column; } .address-actions{ justify-content:flex-start; } }
