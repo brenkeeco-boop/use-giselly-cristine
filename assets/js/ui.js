@@ -25,7 +25,7 @@ function headerTemplate(){
       <a href="index.html" class="brand">use <span>giselly cristine</span></a>
       <div class="header-actions">
         <button class="icon-btn" id="searchToggle" aria-label="Abrir busca" aria-controls="searchLine" aria-expanded="false">${ICONS.search}</button>
-        <a href="conta.html" class="icon-btn" aria-label="Conta">${ICONS.user}</a>
+        <a href="conta.html" class="icon-btn" id="accountLink" aria-label="Conta"><span class="account-icon">${ICONS.user}</span><span class="account-avatar" aria-hidden="true"></span></a>
         <a href="conta.html?tab=favoritos" class="icon-btn" aria-label="Favoritos">
           ${ICONS.heart}<span class="icon-count js-fav-count" style="display:none">0</span>
         </a>
@@ -89,6 +89,28 @@ function showStoreNotice(message, type = "info"){
   if (!notice){ notice = document.createElement("div"); notice.id = "storeNotice"; notice.className = "store-notice"; notice.setAttribute("role", "status"); notice.setAttribute("aria-live", "polite"); document.body.appendChild(notice); }
   notice.textContent = message; notice.className = `store-notice ${type} open`;
   clearTimeout(showStoreNotice.timer); showStoreNotice.timer = setTimeout(() => notice.classList.remove("open"), 3600);
+}
+
+function initialsFromName(name){
+  const parts = (name || "").trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return "";
+  return `${parts[0][0]}${parts.length > 1 ? parts[parts.length - 1][0] : ""}`.toUpperCase();
+}
+
+async function updateAccountAvatar(){
+  const link = document.getElementById("accountLink");
+  if (!link || !window.supabaseClient) return;
+  const avatar = link.querySelector(".account-avatar");
+  const icon = link.querySelector(".account-icon");
+  const { data, error } = await supabaseClient.auth.getUser();
+  if (error || !data.user){ avatar.textContent = ""; link.classList.remove("is-authenticated"); link.setAttribute("aria-label", "Conta"); return; }
+  let name = data.user.user_metadata?.nome || "";
+  const { data: perfil, error: profileError } = await supabaseClient.from("perfis").select("nome").eq("id", data.user.id).maybeSingle();
+  if (profileError) console.error("[Use Giselly Cristine][Supabase]", { table:"perfis", operation:"select avatar", message:profileError.message, code:profileError.code, details:profileError.details, hint:profileError.hint });
+  name = perfil?.nome || name;
+  const initials = initialsFromName(name);
+  if (!initials){ avatar.textContent = ""; link.classList.remove("is-authenticated"); link.setAttribute("aria-label", "Minha conta"); return; }
+  avatar.textContent = initials; link.classList.add("is-authenticated"); link.setAttribute("aria-label", "Minha conta");
 }
 
 function footerTemplate(){
@@ -340,4 +362,9 @@ function mountLayout(activeCategory){
   bindLayoutEvents();
   updateCartCount();
   updateFavCount();
+  updateAccountAvatar();
+  if (window.supabaseClient && !window.__ugcAvatarListener){
+    window.__ugcAvatarListener = true;
+    supabaseClient.auth.onAuthStateChange(() => setTimeout(updateAccountAvatar, 0));
+  }
 }

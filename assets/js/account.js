@@ -39,7 +39,7 @@ function setAccountState(user){
   currentUser = user || null;
   document.querySelectorAll("[data-auth-only]").forEach(el => el.hidden = !currentUser);
   document.querySelectorAll("[data-guest-only]").forEach(el => el.hidden = Boolean(currentUser));
-  const accountLink = document.querySelector('a[aria-label="Conta"]');
+  const accountLink = document.getElementById("accountLink");
   if (accountLink) accountLink.setAttribute("aria-label", currentUser ? "Minha conta" : "Conta");
   if (!currentUser){
     ["profileName","profileEmail","profilePhone","profileCpf","profileBirthDate"].forEach(id => { const field = document.getElementById(id); if (field) field.value = ""; });
