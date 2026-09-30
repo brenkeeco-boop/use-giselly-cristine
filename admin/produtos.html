@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex, nofollow" />
+<meta name="theme-color" content="#1B0F07" />
+<title>Produtos — Painel Use Giselly Cristine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/tokens.css" />
+<link rel="stylesheet" href="assets/admin.css" />
+</head>
+<body class="adm adm-guard">
+
+<!-- Enquanto o acesso é verificado, nada do painel aparece -->
+<div class="adm-boot" id="admBoot" role="status">
+  <p data-boot-msg>Verificando acesso…</p>
+  <button class="btn btn-outline" type="button" data-boot-retry hidden>Tentar novamente</button>
+</div>
+<noscript><p class="adm-noscript">Ative o JavaScript para usar o painel administrativo.</p></noscript>
+
+<div class="adm-shell">
+  <header class="adm-top" id="admTop"></header>
+  <div class="adm-backdrop" id="admBackdrop"></div>
+  <aside class="adm-side" id="admSide" aria-label="Menu do painel"></aside>
+
+  <div class="adm-main">
+    <main class="adm-content" id="admMain">
+      <header class="adm-pagehead">
+        <div>
+          <p class="adm-eyebrow">Catálogo</p>
+          <h1>Produtos</h1>
+        </div>
+        <button class="btn btn-wine adm-new" type="button" data-new>Novo produto</button>
+      </header>
+
+      <p class="adm-hint adm-hint--top">Aqui você cadastra e organiza os produtos no banco de dados. A loja pública ainda exibe o catálogo atual (<code>products.js</code>) e será conectada ao banco em uma próxima etapa.</p>
+
+      <section class="adm-toolbar" aria-label="Buscar e filtrar produtos">
+        <div class="adm-search">
+          <label class="adm-sr" for="pSearch">Buscar por nome</label>
+          <svg class="adm-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
+          <input class="adm-control" id="pSearch" type="search" placeholder="Buscar por nome" autocomplete="off" spellcheck="false">
+        </div>
+        <div>
+          <label class="adm-sr" for="pCategoria">Filtrar por categoria</label>
+          <select class="adm-control" id="pCategoria"><option value="">Todas as categorias</option></select>
+        </div>
+        <div>
+          <label class="adm-sr" for="pStatus">Filtrar por status</label>
+          <select class="adm-control" id="pStatus">
+            <option value="">Todos os status</option>
+            <option value="ativo">Somente ativos</option>
+            <option value="inativo">Somente inativos</option>
+          </select>
+        </div>
+      </section>
+      <p class="adm-count" data-count aria-live="polite"></p>
+
+      <section class="adm-panel adm-listpanel" aria-label="Lista de produtos">
+        <div data-list aria-busy="true"></div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<!-- Formulário de criação/edição -->
+<dialog class="adm-dialog" id="pDialog" aria-labelledby="pDialogTitle">
+  <form class="adm-dialog-form" id="pForm" novalidate>
+    <header class="adm-dialog-head">
+      <h2 id="pDialogTitle">Novo produto</h2>
+      <button class="adm-iconbtn adm-iconbtn--dark" type="button" data-close aria-label="Fechar">
+        <svg class="adm-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </header>
+    <div class="adm-dialog-body">
+      <div class="adm-alert adm-alert--error" id="pFormError" role="alert" hidden></div>
+
+      <div class="adm-field">
+        <label for="fNome">Nome</label>
+        <input id="fNome" name="nome" type="text" maxlength="120" autocomplete="off" aria-describedby="eNome">
+        <p class="adm-fielderr" id="eNome" hidden></p>
+      </div>
+      <p class="adm-slugline" id="fSlugLine" hidden>Endereço do produto: <code id="fSlug"></code></p>
+
+      <div class="adm-field">
+        <label for="fCategoria">Categoria</label>
+        <select id="fCategoria" name="categoria" aria-describedby="eCategoria"><option value="">Selecione…</option></select>
+        <p class="adm-fielderr" id="eCategoria" hidden></p>
+      </div>
+
+      <div class="adm-field">
+        <label for="fDescricao">Descrição <span class="adm-opt">(opcional)</span></label>
+        <textarea id="fDescricao" name="descricao" rows="4" maxlength="2000" aria-describedby="eDescricao"></textarea>
+        <p class="adm-fielderr" id="eDescricao" hidden></p>
+      </div>
+
+      <div class="adm-row2">
+        <div class="adm-field">
+          <label for="fPreco">Preço (R$)</label>
+          <input id="fPreco" name="preco" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00" aria-describedby="ePreco">
+          <p class="adm-fielderr" id="ePreco" hidden></p>
+        </div>
+        <div class="adm-field">
+          <label for="fPromo">Preço promocional <span class="adm-opt">(opcional)</span></label>
+          <input id="fPromo" name="preco_promocional" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00" aria-describedby="ePromo">
+          <p class="adm-fielderr" id="ePromo" hidden></p>
+        </div>
+      </div>
+
+      <label class="adm-check">
+        <input type="checkbox" id="fAtivo" name="ativo" checked>
+        <span><b>Produto ativo</b><small>Desmarque para tirar o produto de circulação sem excluí-lo.</small></span>
+      </label>
+
+      <div class="adm-soon adm-soon--inline"><p><b>Imagens</b> · o envio de fotos chegará em uma próxima etapa.</p></div>
+    </div>
+    <footer class="adm-dialog-foot">
+      <button class="btn btn-outline" type="button" data-close>Cancelar</button>
+      <button class="btn btn-wine" type="submit" id="pSave">Salvar produto</button>
+    </footer>
+  </form>
+</dialog>
+
+<!-- Confirmação de exclusão -->
+<dialog class="adm-dialog adm-dialog--sm" id="pConfirm" aria-labelledby="pConfirmTitle" aria-describedby="pConfirmText">
+  <div class="adm-dialog-form">
+    <header class="adm-dialog-head"><h2 id="pConfirmTitle">Excluir produto?</h2></header>
+    <div class="adm-dialog-body">
+      <p id="pConfirmText" class="adm-confirm-text"></p>
+      <div class="adm-alert adm-alert--error" id="pConfirmError" role="alert" hidden></div>
+    </div>
+    <footer class="adm-dialog-foot">
+      <button class="btn btn-outline" type="button" id="pConfirmCancel" autofocus>Cancelar</button>
+      <button class="btn adm-btn-danger" type="button" id="pConfirmOk">Excluir</button>
+    </footer>
+  </div>
+</dialog>
+
+<div class="adm-toasts" id="admToasts" role="status" aria-live="polite"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../assets/js/supabase.js"></script>
+<script src="../assets/js/products.js"></script>
+<script src="assets/admin-auth.js"></script>
+<script src="assets/admin-shell.js"></script>
+<script src="assets/admin-produtos.js"></script>
+</body>
+</html>
