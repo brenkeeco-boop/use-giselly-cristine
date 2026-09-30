@@ -123,6 +123,7 @@
   });
 
   document.getElementById("addToCartBtn").addEventListener("click", async () => {
+    console.log("[DEBUG] addToCartBtn acionado", { productId: product.id });
     const size = document.querySelector("#sizeRow .size-opt.selected").dataset.size;
     const color = document.getElementById("colorLabel").textContent;
     const added = await addToCart(product.id, size, color, 1);

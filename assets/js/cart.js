@@ -2,6 +2,7 @@
 const CART_KEY = "ugc_cart";
 const FAV_KEY = "ugc_favorites";
 let activeUserId = null;
+console.log("[DEBUG] cart.js carregado");
 
 function readStore(key){ try { return JSON.parse(localStorage.getItem(key)) || []; } catch { return []; } }
 function writeStore(key, value){ localStorage.setItem(key, JSON.stringify(value)); }
@@ -20,9 +21,11 @@ function supabaseUserMessage(error){
 }
 
 async function authenticatedUser(){
+  console.log("[DEBUG] authenticatedUser acionado", { supabaseClientDisponivel: Boolean(window.supabaseClient) });
   if (!window.supabaseClient) return null;
   try {
     const { data, error } = await supabaseClient.auth.getUser();
+    console.log("[DEBUG] auth.getUser resultado", { user:data?.user ? { id:data.user.id, email:data.user.email } : null, error });
     if (error){ reportSupabaseError("auth.users", "getUser", error); return null; }
     return data.user;
   } catch (error) { reportSupabaseError("auth.users", "getUser", error); return null; }
@@ -54,9 +57,12 @@ async function loadCloudCart(){
 }
 
 async function addToCart(productId, size, color, qty = 1){
+  console.log("[DEBUG] addToCart acionado", { productId, size, color, qty });
   const user = await authenticatedUser();
+  console.log("[DEBUG] addToCart usuário resolvido", { user:user ? { id:user.id, email:user.email } : null });
   if (!user){ showAuthRequired("Faça login para adicionar produtos à sacola."); return false; }
   try {
+    console.log("[DEBUG] addToCart iniciando consulta do carrinho", { userId:user.id });
     const cart = await getCloudCart(user.id);
     const product = getProductById(productId);
     if (!product) { console.error("[Use Giselly Cristine] Produto não encontrado para o carrinho.", { productId }); showStoreNotice("Não foi possível localizar este produto.", "error"); return false; }
@@ -101,9 +107,12 @@ async function loadCloudFavorites(){
 }
 
 async function toggleFavorite(productId){
+  console.log("[DEBUG] toggleFavorite acionado", { productId });
   const user = await authenticatedUser();
+  console.log("[DEBUG] toggleFavorite usuário resolvido", { user:user ? { id:user.id, email:user.email } : null });
   if (!user){ showAuthRequired("Faça login para adicionar produtos aos favoritos."); return null; }
   try {
+    console.log("[DEBUG] toggleFavorite iniciando operação", { userId:user.id, productId });
     const product = getProductById(productId); const exists = getFavorites().includes(productId);
     const result = exists
       ? await supabaseClient.from("favoritos").delete().eq("usuario_id", user.id).eq("produto_id", productId)
@@ -117,9 +126,13 @@ function isFavorite(productId){ return getFavorites().includes(productId); }
 function updateFavCount(){ document.querySelectorAll(".js-fav-count").forEach(el => { const count = getFavorites().length; el.textContent = count; el.style.display = count ? "flex" : "none"; }); }
 
 document.addEventListener("DOMContentLoaded", async () => {
+  console.log("[DEBUG] cart.js DOMContentLoaded");
   clearCustomerCache();
   if (!window.supabaseClient) return;
+  const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
+  console.log("[DEBUG] auth.getSession resultado", { session:sessionData?.session, user:sessionData?.session?.user ? { id:sessionData.session.user.id, email:sessionData.session.user.email } : null, error:sessionError });
   const user = await authenticatedUser();
+  console.log("[DEBUG] sessão inicial do carrinho", { user:user ? { id:user.id, email:user.email } : null });
   if (user){ try { await Promise.all([loadCloudCart(), loadCloudFavorites()]); } catch (error) { reportSupabaseError("carrinho/favoritos", "carregamento inicial", error); } }
   supabaseClient.auth.onAuthStateChange((_event, session) => {
     if (!session?.user) clearCustomerCache();

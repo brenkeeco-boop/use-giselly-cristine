@@ -225,6 +225,7 @@ function renderCartDrawer(){
 }
 
 function bindLayoutEvents(){
+  console.log("[DEBUG] bindLayoutEvents acionado");
   const menuToggle = document.getElementById("menuToggle");
   const mobileNav = document.getElementById("mobileNav");
   const mobileBackdrop = document.getElementById("mobileBackdrop");
@@ -314,6 +315,8 @@ function bindLayoutEvents(){
   });
 
   document.body.addEventListener("click", async (e) => {
+    const debugTarget = e.target.closest("[data-fav], [data-quickadd], #addToCartBtn");
+    if (debugTarget) console.log("[DEBUG] clique capturado pelo listener global", { id:debugTarget.id || null, dataFav:debugTarget.dataset.fav || null, dataQuickadd:debugTarget.dataset.quickadd || null, tag:debugTarget.tagName });
     const sizeGuide = e.target.closest("[data-open-size-guide]");
     if (sizeGuide){
       e.preventDefault();
@@ -322,12 +325,14 @@ function bindLayoutEvents(){
     }
     const favBtn = e.target.closest("[data-fav]");
     if (favBtn){
+      console.log("[DEBUG] data-fav acionado", { productId:favBtn.dataset.fav });
       toggleFavorite(favBtn.dataset.fav).then(active => {
         if (active !== null) favBtn.classList.toggle("active", active);
       });
     }
     const quickAdd = e.target.closest("[data-quickadd]");
     if (quickAdd){
+      console.log("[DEBUG] data-quickadd acionado", { productId:quickAdd.dataset.quickadd });
       const p = getProductById(quickAdd.dataset.quickadd);
       const added = await addToCart(p.id, p.sizes[Math.floor(p.sizes.length/2)], p.colors[0].name, 1);
       if (!added) return;
