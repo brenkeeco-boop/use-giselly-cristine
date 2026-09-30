@@ -19,7 +19,7 @@ const ICONS = {
 
 function headerTemplate(){
   return `
-  <div class="announce">FRETE GRÁTIS PARA TODO O BRASIL EM COMPRAS ACIMA DE R$ 399</div>
+  <div class="announce"><span class="announce-long">Frete grátis para todo o Brasil em compras acima de R$ 399</span><span class="announce-short">Frete grátis acima de R$ 399</span></div>
   <header class="site-header">
     <div class="wrap header-row">
       <div class="header-left">
@@ -29,11 +29,11 @@ function headerTemplate(){
         </button>
       </div>
       <a href="index.html" class="brand" aria-label="Use Giselly Cristine">
-        <img class="brand-logo" src="assets/images/logo-use-giselly-cristine.jpeg" alt="Use Giselly Cristine" />
+        <img class="brand-logo" src="assets/images/logo-use-giselly-cristine.png" width="480" height="480" alt="Use Giselly Cristine" fetchpriority="high" />
       </a>
       <div class="header-actions">
-        <button class="icon-btn" id="searchToggle" aria-label="Abrir busca" aria-controls="searchLine" aria-expanded="false">${ICONS.search}</button>
-        <a href="conta.html?tab=favoritos" class="icon-btn" aria-label="Favoritos">
+        <button class="icon-btn hd-secondary" id="searchToggle" aria-label="Abrir busca" aria-controls="searchLine" aria-expanded="false">${ICONS.search}</button>
+        <a href="conta.html?tab=favoritos" class="icon-btn hd-secondary" aria-label="Favoritos">
           ${ICONS.heart}<span class="icon-count js-fav-count" style="display:none">0</span>
         </a>
         <button class="icon-btn" id="cartToggle" aria-label="Abrir carrinho" aria-controls="cartDrawer" aria-expanded="false">
@@ -65,6 +65,10 @@ function headerTemplate(){
       <a href="catalogo.html?cat=calcas">Calças</a>
       <a href="catalogo.html?cat=saias">Saias</a>
       <a href="catalogo.html?cat=promocoes">Promoções</a>
+    </div>
+    <div class="mobile-nav-utility">
+      <button type="button" id="mobileSearchLink">Buscar</button>
+      <a href="conta.html?tab=favoritos">Favoritos <span class="js-fav-count" style="display:none">0</span></a>
     </div>
     <a class="mobile-account-link" href="conta.html">Minha conta</a>
   </nav>
@@ -370,6 +374,18 @@ function bindLayoutEvents(){
   });
 }
 
+function bindHeaderExtras(){
+  const link = document.getElementById("mobileSearchLink");
+  const toggle = document.getElementById("searchToggle");
+  const searchLine = document.getElementById("searchLine");
+  const closeMenu = document.getElementById("mobileClose");
+  if (!link || !toggle || !searchLine) return;
+  link.addEventListener("click", () => {
+    closeMenu && closeMenu.click();
+    if (!searchLine.classList.contains("open")) toggle.click();
+  });
+}
+
 function mountLayout(activeCategory){
   document.getElementById("headerMount").innerHTML = headerTemplate();
   document.getElementById("footerMount").innerHTML = footerTemplate();
@@ -377,6 +393,7 @@ function mountLayout(activeCategory){
     document.querySelectorAll(`.mobile-nav-links a[href*="cat=${activeCategory}"]`).forEach(a => a.classList.add("active"));
   }
   bindLayoutEvents();
+  bindHeaderExtras();
   updateCartCount();
   updateFavCount();
   updateAccountAvatar();

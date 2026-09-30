@@ -1,0 +1,209 @@
+/* ==========================================================================
+   HEADER — composição editorial
+   desktop:  Menu            [ LOGO ]            Busca  Favoritos  Sacola  Conta
+   mobile:   Menu            [ LOGO ]                          Sacola  Conta
+   A logo é o único elemento escuro e grande; todo o resto é fino e silencioso.
+   ========================================================================== */
+
+/* ----- faixa de aviso ----- */
+.announce{
+  background: var(--cacau);
+  color: var(--camel-soft);
+  text-align: center;
+  padding: .62rem var(--sp-3);
+  font-size: .74rem;
+  letter-spacing: .06em;
+  line-height: 1.3;
+}
+.announce-short{ display: none; }
+
+/* ----- estrutura: logo sempre no centro geométrico da tela ----- */
+.site-header{
+  position: relative;
+  z-index: 60;
+  background: var(--bone);
+}
+.header-row{
+  display: grid;
+  grid-template-columns: minmax(0,1fr) auto minmax(0,1fr);
+  align-items: center;
+  column-gap: var(--sp-3);
+  padding-block: 1.5rem;
+}
+.header-left{ display: flex; justify-content: flex-start; }
+.header-actions{ display: flex; justify-content: flex-end; align-items: center; gap: .1rem; }
+
+/* ----- logo ----- */
+.site-header .brand{
+  grid-column: 2;
+  display: block;
+  width: 7rem;
+  height: 7rem;
+  border-radius: 50%;
+  line-height: 0;
+  font-size: 0;
+}
+.site-header .brand::before{ display: none; }
+.site-header .brand:hover{ opacity: 1; }
+.site-header .brand-logo{
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* ----- menu: duas linhas finas + palavra ----- */
+.site-header .menu-toggle{
+  grid-column: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: .9rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  transition: color var(--dur) var(--ease);
+}
+.menu-lines{ display: grid; gap: .42rem; width: 1.6rem; }
+.menu-lines span{
+  display: block;
+  height: 1px;
+  background: currentColor;
+  transition: width 320ms var(--ease);
+}
+.menu-lines span:last-child{ width: .95rem; }
+.site-header .menu-toggle:hover{ color: var(--wine); }
+.site-header .menu-toggle:hover .menu-lines span:last-child{ width: 100%; }
+
+.menu-label,
+.account-label{
+  font-family: var(--f-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 1.12rem;
+  letter-spacing: .01em;
+  line-height: 1;
+}
+
+/* ----- ícones finos, sem caixa, sem fundo ----- */
+.site-header .icon-btn{
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .55rem;
+  min-width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  transition: color var(--dur) var(--ease);
+}
+.site-header .icon-btn svg{
+  width: 1.38rem;
+  height: 1.38rem;
+  stroke-width: 1;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.site-header #cartToggle svg{ width: 1.55rem; height: 1.55rem; }  /* a sacola tem traço mais estreito: compensa o peso óptico */
+.site-header .icon-btn:hover{ color: var(--wine); }
+
+/* contadores: pequenos, presos ao canto do ícone */
+.site-header .icon-count{
+  position: absolute;
+  top: .3rem;
+  right: -.05rem;
+  min-width: .7rem;
+  height: .9rem;
+  align-items: center;
+  justify-content: center;
+  color: var(--wine);
+  font-size: .68rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+/* ----- conta: visitante = ícone + palavra · logada = iniciais ----- */
+.site-header .account-entry{
+  min-width: 0;
+  padding-inline: .7rem 0;
+}
+.account-icon{ display: inline-flex; }
+.account-avatar{
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 2.05rem;
+  height: 2.05rem;
+  border-radius: 50%;
+  background: var(--cacau);
+  color: var(--ouro);
+  font-size: .62rem;
+  font-weight: 500;
+  letter-spacing: .08em;
+}
+.site-header .account-entry.is-authenticated{ padding-inline: .7rem 0; }
+.account-entry.is-authenticated .account-icon,
+.account-entry.is-authenticated .account-label{ display: none; }
+.account-entry.is-authenticated .account-avatar{ display: flex; }
+.site-header .account-entry.is-authenticated:hover .account-avatar{ background: var(--wine); }
+
+/* ----- busca: linha que se abre sob o header (fechada, não ocupa espaço algum) ----- */
+.site-header .search-line{ border-top: 0; }
+.site-header .search-line.open{ border-top: 1px solid rgba(70,56,45,.1); }
+.site-header .search-inner{ padding-block: 0; transition: padding-block var(--dur) var(--ease); }
+.site-header .search-line.open .search-inner{ padding-block: 1.05rem; }
+
+/* ----- itens de apoio do menu (só aparecem onde busca/favoritos saem do header) ----- */
+.mobile-nav-utility{ margin-top: var(--sp-3); padding-top: var(--sp-2); border-top: 1px solid var(--line); }
+.mobile-nav .mobile-nav-utility a,
+.mobile-nav-utility button{
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  width: 100%;
+  padding: .8rem .1rem;
+  border: 0;
+  background: none;
+  color: var(--ink-soft);
+  font-size: var(--step-0);
+  text-align: left;
+  transition: color var(--dur) var(--ease);
+}
+.mobile-nav .mobile-nav-utility a:hover,
+.mobile-nav-utility button:hover{ color: var(--wine); }
+.mobile-nav-utility .js-fav-count{ font-size: .8rem; color: var(--wine); }
+
+/* ==========================================================================
+   Tablet estreito e celular: MENU | LOGO | SACOLA | CONTA
+   ========================================================================== */
+@media (min-width: 721px){
+  .mobile-nav-utility{ display: none; }
+}
+@media (max-width: 720px){
+  .header-row{ padding-block: .95rem; column-gap: var(--sp-2); }
+  .site-header .brand{ width: 5rem; height: 5rem; }
+  .hd-secondary,
+  .menu-label,
+  .account-label{ display: none !important; }
+  .site-header .menu-toggle{ min-width: 2.75rem; }
+  .menu-lines{ width: 1.5rem; }
+  .site-header .icon-btn{ min-width: 2.6rem; }
+  .site-header .account-entry,
+  .site-header .account-entry.is-authenticated{ padding-inline: 0; }
+  .site-header .account-entry{ margin-right: -.72rem; }               /* alinha o traço do ícone à margem do conteúdo */
+  .site-header .account-entry.is-authenticated{ margin-right: 0; }
+  .account-avatar{ width: 1.95rem; height: 1.95rem; }
+  .site-header .icon-btn svg{ width: 1.32rem; height: 1.32rem; }
+  .site-header .icon-count{ top: .28rem; right: -.02rem; }
+}
+@media (max-width: 560px){
+  .announce{ padding: .55rem var(--sp-2); font-size: .7rem; }
+  .announce-long{ display: none; }
+  .announce-short{ display: inline; }
+}
