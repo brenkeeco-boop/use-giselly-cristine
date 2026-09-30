@@ -22,17 +22,24 @@ function headerTemplate(){
   <div class="announce">FRETE GRÁTIS PARA TODO O BRASIL EM COMPRAS ACIMA DE R$ 399</div>
   <header class="site-header">
     <div class="wrap header-row">
-      <button class="menu-toggle" id="menuToggle" aria-label="Abrir menu" aria-controls="mobileNav" aria-expanded="false">${ICONS.menu}</button>
-      <a href="index.html" class="brand">use <span>giselly cristine</span></a>
+      <div class="header-left">
+        <button class="menu-toggle" id="menuToggle" aria-label="Abrir menu" aria-controls="mobileNav" aria-expanded="false">
+          <span class="menu-lines" aria-hidden="true"><span></span><span></span></span>
+          <span class="menu-label">Menu</span>
+        </button>
+      </div>
+      <a href="index.html" class="brand" aria-label="Use Giselly Cristine">
+        <img class="brand-logo" src="assets/images/logo-use-giselly-cristine.jpeg" alt="Use Giselly Cristine" />
+      </a>
       <div class="header-actions">
         <button class="icon-btn" id="searchToggle" aria-label="Abrir busca" aria-controls="searchLine" aria-expanded="false">${ICONS.search}</button>
-        <a href="conta.html" class="icon-btn" id="accountLink" aria-label="Conta"><span class="account-icon">${ICONS.user}</span><span class="account-avatar" aria-hidden="true"></span></a>
         <a href="conta.html?tab=favoritos" class="icon-btn" aria-label="Favoritos">
           ${ICONS.heart}<span class="icon-count js-fav-count" style="display:none">0</span>
         </a>
         <button class="icon-btn" id="cartToggle" aria-label="Abrir carrinho" aria-controls="cartDrawer" aria-expanded="false">
           ${ICONS.bag}<span class="icon-count js-cart-count" style="display:none">0</span>
         </button>
+        <a href="conta.html" class="icon-btn account-entry" id="accountLink" aria-label="Conta"><span class="account-icon">${ICONS.user}</span><span class="account-avatar" aria-hidden="true"></span><span class="account-label">Conta</span></a>
       </div>
     </div>
     <div class="search-line" id="searchLine">
