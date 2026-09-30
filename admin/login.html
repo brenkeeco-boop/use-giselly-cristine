@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex, nofollow" />
+<meta name="theme-color" content="#1B0F07" />
+<title>Entrar — Painel Use Giselly Cristine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/tokens.css" />
+<link rel="stylesheet" href="assets/admin.css" />
+</head>
+<body class="adm">
+<main class="adm-login">
+  <div class="adm-login-card">
+    <img class="adm-login-logo" src="../assets/images/logo-use-giselly-cristine.png" alt="Use Giselly Cristine" width="88" height="88">
+    <p class="adm-eyebrow">Acesso restrito</p>
+    <h1>Painel administrativo</h1>
+    <div id="loginAlert" class="adm-alert" role="alert" hidden></div>
+    <form id="adminLoginForm" novalidate>
+      <div class="adm-field">
+        <label for="adminEmail">E-mail</label>
+        <input id="adminEmail" type="email" autocomplete="username" inputmode="email" autocapitalize="none" spellcheck="false" placeholder="voce@email.com" required>
+      </div>
+      <div class="adm-field">
+        <label for="adminPassword">Senha</label>
+        <input id="adminPassword" type="password" autocomplete="current-password" placeholder="••••••••" required>
+      </div>
+      <button class="btn btn-wine btn-block" id="adminLoginSubmit" type="submit">Entrar</button>
+    </form>
+    <a class="adm-back" href="../index.html">← Voltar para a loja</a>
+  </div>
+  <noscript><p class="adm-alert adm-alert--error">Ative o JavaScript para entrar no painel.</p></noscript>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../assets/js/supabase.js"></script>
+<script src="assets/admin-auth.js"></script>
+<script src="assets/admin-login.js"></script>
+</body>
+</html>
