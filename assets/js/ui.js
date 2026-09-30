@@ -1,3 +1,4 @@
+console.log("[DEBUG] UI.JS REALMENTE CARREGADO");
 /* Componentes reutilizáveis de layout: header, footer, drawer de carrinho,
    menu mobile e card de produto. Injeta-se via mountLayout() em cada página. */
 

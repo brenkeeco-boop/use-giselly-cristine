@@ -2,6 +2,7 @@
 const CART_KEY = "ugc_cart";
 const FAV_KEY = "ugc_favorites";
 let activeUserId = null;
+console.log("[DEBUG] CART.JS REALMENTE CARREGADO");
 console.log("[DEBUG] cart.js carregado");
 
 function readStore(key){ try { return JSON.parse(localStorage.getItem(key)) || []; } catch { return []; } }

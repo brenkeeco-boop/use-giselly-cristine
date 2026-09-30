@@ -13,3 +13,7 @@ const supabaseClient = window.supabase.createClient(
     }
   }
 );
+
+/* Expõe a mesma instância para scripts que verificam a disponibilidade no window. */
+window.supabaseClient = supabaseClient;
+console.log("[DEBUG] SUPABASE CLIENTE GLOBAL DISPONÍVEL", { supabaseClientDisponivel: Boolean(window.supabaseClient) });
