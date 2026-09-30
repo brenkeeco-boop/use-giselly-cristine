@@ -192,6 +192,7 @@ function renderCartDrawer(){
   const foot = document.getElementById("cartDrawerFoot");
   if (!body) return;
   const cart = getCart();
+  console.log("[DEBUG] renderizando sacola", { source:"drawer", items:cart, total:cart.length, drawerOpen:document.getElementById("cartDrawer")?.classList.contains("open") });
   if (cart.length === 0){
     body.innerHTML = `<div class="drawer-empty"><span class="drawer-empty-mark">○</span><p>Sua sacola está vazia.</p><small>Encontre uma peça que combine com você.</small></div>`;
     foot.innerHTML = `<a href="catalogo.html" class="btn btn-block">Ver novidades</a>`;
@@ -313,6 +314,9 @@ function bindLayoutEvents(){
 
   document.addEventListener("ugc:favorites-updated", () => {
     document.querySelectorAll("[data-fav]").forEach(button => button.classList.toggle("active", isFavorite(button.dataset.fav)));
+  });
+  document.addEventListener("ugc:cart-updated", () => {
+    console.log("[DEBUG] evento ugc:cart-updated recebido pelo drawer", { drawerOpen:cartDrawer?.classList.contains("open"), cart:getCart() });
   });
 
   document.body.addEventListener("click", async (e) => {

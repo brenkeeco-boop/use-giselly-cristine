@@ -35,9 +35,10 @@ async function authenticatedUser(){
 async function getCloudCart(userId){
   let { data, error } = await supabaseClient.from("carrinhos").select("id").eq("usuario_id", userId).maybeSingle();
   if (error) { reportSupabaseError("carrinhos", "select", error); throw error; }
-  if (data) return data;
+  if (data) { console.log("[DEBUG] carrinho encontrado/criado", { source:"existente", userId, carrinhoId:data.id }); return data; }
   ({ data, error } = await supabaseClient.from("carrinhos").insert({ usuario_id:userId }).select("id").single());
   if (error) { reportSupabaseError("carrinhos", "insert", error); throw error; }
+  console.log("[DEBUG] carrinho encontrado/criado", { source:"criado", userId, carrinhoId:data.id });
   return data;
 }
 
@@ -50,9 +51,12 @@ async function loadCloudCart(){
   if (!user) { clearCustomerCache(); return []; }
   try {
     const cart = await getCloudCart(user.id);
+    console.log("[DEBUG] carregando itens do carrinho", { userId:user.id, carrinhoId:cart.id });
     const { data, error } = await supabaseClient.from("carrinho_itens").select("produto_id,tamanho,cor,quantidade").eq("carrinho_id", cart.id).order("criado_em");
     if (error) { reportSupabaseError("carrinho_itens", "select", error); throw error; }
+    console.log("[DEBUG] itens retornados", { carrinhoId:cart.id, items:data, total:data.length });
     activeUserId = user.id; writeStore(CART_KEY, localCartFromRemote(data)); updateCartCount(); document.dispatchEvent(new CustomEvent("ugc:cart-updated"));
+    console.log("[DEBUG] estado local atualizado após leitura", { cart:getCart(), total:cartCount() });
     return getCart();
   } catch (error) { reportSupabaseError("carrinho_itens", "loadCloudCart", error); throw error; }
 }
@@ -73,6 +77,10 @@ async function addToCart(productId, size, color, qty = 1){
       ? await supabaseClient.from("carrinho_itens").update({ quantidade:existing.quantidade + qty, atualizado_em:new Date().toISOString() }).eq("id", existing.id).eq("carrinho_id", cart.id)
       : await supabaseClient.from("carrinho_itens").insert({ carrinho_id:cart.id, produto_id:productId, nome_produto:product.name, imagem_produto:product.images[0], tamanho:size, cor, quantidade:qty, preco_unitario:product.price });
     if (result.error) { reportSupabaseError("carrinho_itens", existing ? "update quantidade" : "insert", result.error); showStoreNotice(supabaseUserMessage(result.error), "error"); return false; }
+    console.log("[DEBUG] item inserido no Supabase", { operation:existing ? "update quantidade" : "insert", carrinhoId:cart.id, productId, size, color, result });
+    const { data: directItems, error: directReadError } = await supabaseClient.from("carrinho_itens").select("id,produto_id,tamanho,cor,quantidade,preco_unitario").eq("carrinho_id", cart.id).order("criado_em");
+    if (directReadError) reportSupabaseError("carrinho_itens", "consulta direta após inclusão", directReadError);
+    else console.log("[DEBUG] consulta direta carrinho_itens após inclusão", { carrinhoId:cart.id, items:directItems, total:directItems.length });
     await loadCloudCart(); return true;
   } catch (error) { reportSupabaseError("carrinhos/carrinho_itens", "addToCart", error); showStoreNotice(supabaseUserMessage(error), "error"); return false; }
 }
