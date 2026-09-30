@@ -352,3 +352,12 @@
 .danger-link{ color:var(--error); }
 .account-empty{ margin:0; padding:var(--sp-4); text-align:center; color:var(--ink-soft); background:var(--bone-2); }
 @media (max-width:600px){ .address-card{ flex-direction:column; } .address-actions{ justify-content:flex-start; } }
+
+/* ===== recuperação de senha ===== */
+.recovery-panel{ max-width:560px; margin-inline:auto; }
+.recovery-panel h2{ margin-bottom:.6rem; }
+.recovery-lead{ margin:0 0 var(--sp-3); color:var(--ink-soft); line-height:1.65; }
+.recovery-back{ display:block; margin:var(--sp-2) auto 0; padding:0; border:0; background:none; color:var(--ink-soft); font-size:var(--step--1); text-decoration:underline; }
+.recovery-back:hover{ color:var(--wine); }
+.recovery-done{ text-align:center; }
+.recovery-done-mark{ display:grid; place-items:center; width:3rem; height:3rem; margin:0 auto var(--sp-2); border:1px solid var(--wine); border-radius:50%; color:var(--wine); font-size:1.3rem; }

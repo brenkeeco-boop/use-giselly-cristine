@@ -1,5 +1,51 @@
 let currentUser = null;
 
+/* ===== Recuperação de senha ===================================================
+   Painéis: "recuperar" (pede o e-mail), "nova-senha" (define a senha) e
+   "senha-redefinida" (confirmação). `lockedTab` impede que handleSession()
+   mande o usuário para "Meu perfil" enquanto a recuperação está em andamento. */
+const PASSWORD_RESET_REDIRECT_URL = "https://brenkeeco-boop.github.io/use-giselly-cristine/conta.html";
+const MIN_PASSWORD_LENGTH = 8;
+const LINK_EXPIRED_MESSAGE = "Este link expirou ou já foi utilizado. Solicite um novo link de redefinição de senha.";
+let lockedTab = null;
+
+/* Lido no carregamento do script, antes de o supabase-js limpar a URL do link do e-mail. */
+const recoveryUrl = (() => {
+  const hash = new URLSearchParams(location.hash.replace(/^#/, ""));
+  const query = new URLSearchParams(location.search);
+  const get = key => hash.get(key) ?? query.get(key);
+  const hasError = Boolean(get("error") || get("error_code") || get("error_description"));
+  return { isRecovery: get("type") === "recovery" && !hasError, hasError };
+})();
+if (recoveryUrl.isRecovery) lockedTab = "nova-senha";
+else if (recoveryUrl.hasError) lockedTab = "recuperar";
+
+function recoveryErrorMessage(error){
+  const message = (error?.message || "").toLowerCase();
+  const code = error?.code || "";
+  if (code === "same_password" || message.includes("different from the old password")) return "A nova senha precisa ser diferente da senha atual.";
+  if (code === "weak_password" || message.includes("password should be")) return "A senha não atende aos requisitos de segurança. Escolha uma senha mais forte.";
+  if (code === "over_email_send_rate_limit" || code === "over_request_rate_limit" || error?.status === 429 || message.includes("rate limit") || message.includes("security purposes")) return "Muitas tentativas em pouco tempo. Aguarde alguns minutos e tente novamente.";
+  if (code === "validation_failed" || message.includes("invalid email") || message.includes("unable to validate email")) return "Informe um e-mail válido.";
+  if (message.includes("network") || message.includes("fetch")) return "Não foi possível conectar. Verifique sua internet e tente novamente.";
+  return "Não foi possível concluir esta ação agora. Tente novamente em instantes.";
+}
+
+function isExpiredSessionError(error){
+  const message = (error?.message || "").toLowerCase();
+  const code = error?.code || "";
+  return error?.name === "AuthSessionMissingError" || code === "session_not_found" || code === "refresh_token_not_found"
+    || message.includes("session missing") || message.includes("jwt expired") || message.includes("invalid jwt");
+}
+
+function applyLockedTab(session){
+  if (lockedTab === "nova-senha" && !session?.user){
+    lockedTab = "recuperar";
+    showNotice(LINK_EXPIRED_MESSAGE, "error");
+  }
+  showTab(lockedTab);
+}
+
 function authMessage(error){
   const message = (error?.message || "").toLowerCase();
   if (message.includes("invalid login credentials")) return "E-mail ou senha incorretos.";
@@ -27,7 +73,10 @@ function showTab(name){
   const target = document.getElementById(`tab-${name}`);
   if (!target || (!currentUser && target.dataset.authOnly === "true")) name = "entrar";
   document.querySelectorAll(".tab-panel").forEach(panel => panel.style.display = "none");
-  document.querySelectorAll(".tab-btn").forEach(button => button.classList.toggle("active", button.dataset.tab === name));
+  const highlighted = name === "recuperar" ? "entrar" : name;
+  document.querySelectorAll(".tab-btn").forEach(button => button.classList.toggle("active", button.dataset.tab === highlighted));
+  const tabsBar = document.querySelector(".account-tabs");
+  if (tabsBar) tabsBar.style.display = (name === "nova-senha" || name === "senha-redefinida") ? "none" : "";
   document.getElementById(`tab-${name}`).style.display = "block";
   if (name === "favoritos") renderFavorites();
   if (name === "enderecos") loadAddresses();
@@ -71,9 +120,11 @@ async function loadProfile(user){
 
 async function handleSession(session){
   setAccountState(session?.user);
+  if (lockedTab) return applyLockedTab(session);
   if (session?.user){
     try { await syncCloudCartToLocal(); await syncCloudFavoritesToLocal(); } catch {}
     await loadProfile(session.user);
+    if (lockedTab) return applyLockedTab(session);
     const requestedTab = new URLSearchParams(location.search).get("tab");
     showTab(requestedTab === "favoritos" ? "favoritos" : "perfil");
   } else {
@@ -230,9 +281,84 @@ document.addEventListener("DOMContentLoaded", async () => {
     showNotice("Preferências atualizadas com sucesso.", "success");
   });
 
-  const { data: { session } } = await supabaseClient.auth.getSession();
-  await handleSession(session);
-  supabaseClient.auth.onAuthStateChange((_event, session) => {
+  /* ----- recuperação de senha ----- */
+  document.querySelectorAll(".tab-btn, [data-goto]").forEach(el => el.addEventListener("click", () => { lockedTab = null; }));
+
+  document.getElementById("forgotPasswordLink").addEventListener("click", (event) => {
+    event.preventDefault();
+    clearNotice();
+    lockedTab = null;
+    const forgotEmail = document.getElementById("forgotEmail");
+    const typedEmail = document.getElementById("loginEmail").value.trim();
+    if (typedEmail && !forgotEmail.value) forgotEmail.value = typedEmail;
+    showTab("recuperar");
+    forgotEmail.focus();
+  });
+
+  document.getElementById("forgotForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    clearNotice();
+    const email = document.getElementById("forgotEmail").value.trim();
+    if (!email) return showNotice("Informe o e-mail da sua conta.", "error");
+    if (!/^\S+@\S+\.\S+$/.test(email)) return showNotice("Informe um e-mail válido.", "error");
+    const button = document.getElementById("forgotSubmit");
+    button.disabled = true;
+    let error = null;
+    try {
+      ({ error } = await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo: PASSWORD_RESET_REDIRECT_URL }));
+    } catch (thrown) { error = thrown; }
+    button.disabled = false;
+    if (error) return showNotice(recoveryErrorMessage(error), "error");
+    showNotice("Enviamos um link para redefinir sua senha. Verifique seu e-mail.", "success");
+  });
+
+  document.getElementById("resetPasswordForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    clearNotice();
+    const password = document.getElementById("newPassword").value;
+    const confirmation = document.getElementById("newPasswordConfirmation").value;
+    if (!password || !confirmation) return showNotice("Preencha a nova senha e a confirmação.", "error");
+    if (password.length < MIN_PASSWORD_LENGTH) return showNotice(`A senha deve ter pelo menos ${MIN_PASSWORD_LENGTH} caracteres.`, "error");
+    if (password !== confirmation) return showNotice("As senhas não coincidem.", "error");
+    const button = document.getElementById("resetPasswordSubmit");
+    button.disabled = true;
+    let error = null;
+    try {
+      ({ error } = await supabaseClient.auth.updateUser({ password }));
+    } catch (thrown) { error = thrown; }
+    button.disabled = false;
+    if (error){
+      if (isExpiredSessionError(error)){
+        lockedTab = "recuperar";
+        showTab("recuperar");
+        return showNotice(LINK_EXPIRED_MESSAGE, "error");
+      }
+      return showNotice(recoveryErrorMessage(error), "error");
+    }
+    document.getElementById("newPassword").value = "";
+    document.getElementById("newPasswordConfirmation").value = "";
+    lockedTab = "senha-redefinida";
+    document.getElementById("recoveryDone").textContent = currentUser ? "Ir para meu perfil" : "Ir para o login";
+    showTab("senha-redefinida");
+  });
+
+  document.getElementById("recoveryDone").addEventListener("click", async () => {
+    lockedTab = null;
+    clearNotice();
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    await handleSession(session);
+  });
+
+  if (recoveryUrl.hasError){
+    showNotice(LINK_EXPIRED_MESSAGE, "error");
+    history.replaceState(null, "", location.pathname);
+  }
+
+  /* O listener é registrado antes do getSession para não perder o PASSWORD_RECOVERY. */
+  supabaseClient.auth.onAuthStateChange((event, session) => {
+    if (event === "PASSWORD_RECOVERY" && lockedTab !== "senha-redefinida") lockedTab = "nova-senha";
     setTimeout(() => handleSession(session), 0);
   });
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  await handleSession(session);
 });
