@@ -71,17 +71,38 @@ async function addToCart(productId, size, color, qty = 1){
     const cart = await getCloudCart(user.id);
     const product = getProductById(productId);
     if (!product) { console.error("[Use Giselly Cristine] Produto não encontrado para o carrinho.", { productId }); showStoreNotice("Não foi possível localizar este produto.", "error"); return false; }
-    const { data: existing, error: lookupError } = await supabaseClient.from("carrinho_itens").select("id,quantidade").eq("carrinho_id", cart.id).eq("produto_id", productId).eq("tamanho", size).eq("cor", color).maybeSingle();
-    if (lookupError) { reportSupabaseError("carrinho_itens", "select item", lookupError); showStoreNotice(supabaseUserMessage(lookupError), "error"); return false; }
-    const result = existing
-      ? await supabaseClient.from("carrinho_itens").update({ quantidade:existing.quantidade + qty, atualizado_em:new Date().toISOString() }).eq("id", existing.id).eq("carrinho_id", cart.id)
-      : await supabaseClient.from("carrinho_itens").insert({ carrinho_id:cart.id, produto_id:productId, nome_produto:product.name, imagem_produto:product.images[0], tamanho:size, cor, quantidade:qty, preco_unitario:product.price });
+    console.log("[DEBUG] consultando carrinho_itens", { carrinhoId:cart.id, productId, size, color });
+    let existing;
+    try {
+      const { data, error } = await supabaseClient.from("carrinho_itens").select("id,quantidade").eq("carrinho_id", cart.id).eq("produto_id", productId).eq("tamanho", size).eq("cor", color).maybeSingle();
+      console.log("[DEBUG] resultado consulta carrinho_itens", { carrinhoId:cart.id, existing:data, error });
+      if (error) { reportSupabaseError("carrinho_itens", "select item existente", error); showStoreNotice(supabaseUserMessage(error), "error"); return false; }
+      existing = data;
+    } catch (error) { reportSupabaseError("carrinho_itens", "select item existente exceção", error); showStoreNotice(supabaseUserMessage(error), "error"); return false; }
+
+    let result;
+    if (existing){
+      console.log("[DEBUG] atualizando quantidade carrinho_item", { carrinhoId:cart.id, itemId:existing.id, previousQty:existing.quantidade, nextQty:existing.quantidade + qty });
+      try {
+        result = await supabaseClient.from("carrinho_itens").update({ quantidade:existing.quantidade + qty, atualizado_em:new Date().toISOString() }).eq("id", existing.id).eq("carrinho_id", cart.id);
+        console.log("[DEBUG] resultado atualização carrinho_item", { itemId:existing.id, error:result.error });
+      } catch (error) { reportSupabaseError("carrinho_itens", "update quantidade exceção", error); showStoreNotice(supabaseUserMessage(error), "error"); return false; }
+    } else {
+      const payload = { carrinho_id:cart.id, produto_id:productId, nome_produto:product.name, imagem_produto:product.images[0], tamanho:size, cor, quantidade:qty, preco_unitario:product.price };
+      console.log("[DEBUG] inserindo carrinho_item", payload);
+      try {
+        result = await supabaseClient.from("carrinho_itens").insert(payload);
+        console.log("[DEBUG] resultado inserção carrinho_item", { carrinhoId:cart.id, error:result.error });
+      } catch (error) { reportSupabaseError("carrinho_itens", "insert exceção", error); showStoreNotice(supabaseUserMessage(error), "error"); return false; }
+    }
     if (result.error) { reportSupabaseError("carrinho_itens", existing ? "update quantidade" : "insert", result.error); showStoreNotice(supabaseUserMessage(result.error), "error"); return false; }
-    console.log("[DEBUG] item inserido no Supabase", { operation:existing ? "update quantidade" : "insert", carrinhoId:cart.id, productId, size, color, result });
-    const { data: directItems, error: directReadError } = await supabaseClient.from("carrinho_itens").select("id,produto_id,tamanho,cor,quantidade,preco_unitario").eq("carrinho_id", cart.id).order("criado_em");
-    if (directReadError) reportSupabaseError("carrinho_itens", "consulta direta após inclusão", directReadError);
-    else console.log("[DEBUG] consulta direta carrinho_itens após inclusão", { carrinhoId:cart.id, items:directItems, total:directItems.length });
-    await loadCloudCart(); return true;
+
+    console.log("[DEBUG] carregando carrinho após adicionar", { carrinhoId:cart.id });
+    try {
+      const loaded = await loadCloudCart();
+      console.log("[DEBUG] itens carregados", { carrinhoId:cart.id, items:loaded, total:loaded.length });
+    } catch (error) { reportSupabaseError("carrinho_itens", "loadCloudCart após adicionar", error); showStoreNotice(supabaseUserMessage(error), "error"); return false; }
+    return true;
   } catch (error) { reportSupabaseError("carrinhos/carrinho_itens", "addToCart", error); showStoreNotice(supabaseUserMessage(error), "error"); return false; }
 }
 
