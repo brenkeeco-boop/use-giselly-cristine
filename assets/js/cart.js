@@ -71,12 +71,13 @@ async function addToCart(productId, size, color, qty = 1){
     const cart = await getCloudCart(user.id);
     const product = getProductById(productId);
     if (!product) { console.error("[Use Giselly Cristine] Produto não encontrado para o carrinho.", { productId }); showStoreNotice("Não foi possível localizar este produto.", "error"); return false; }
-    console.log("[DEBUG] consultando carrinho_itens", { carrinhoId:cart.id, productId, size, color });
+    const itemLookupFilters = { carrinho_id:cart.id, produto_id:productId, tamanho:size, cor:color };
+    console.log("[DEBUG] consulta carrinho_itens — antes", { tabela:"carrinho_itens", operacao:"select item existente", filtros:itemLookupFilters, carrinhoId:cart.id, usuarioId:user.id });
     let existing;
     try {
       const { data, error } = await supabaseClient.from("carrinho_itens").select("id,quantidade").eq("carrinho_id", cart.id).eq("produto_id", productId).eq("tamanho", size).eq("cor", color).maybeSingle();
-      console.log("[DEBUG] resultado consulta carrinho_itens", { carrinhoId:cart.id, existing:data, error });
-      if (error) { reportSupabaseError("carrinho_itens", "select item existente", error); showStoreNotice(supabaseUserMessage(error), "error"); return false; }
+      console.log("[DEBUG] consulta carrinho_itens — depois", { data, error, errorMessage:error?.message, errorCode:error?.code, errorDetails:error?.details, errorHint:error?.hint });
+      if (error) { reportSupabaseError("carrinho_itens", "select item existente", error); return false; }
       existing = data;
     } catch (error) { reportSupabaseError("carrinho_itens", "select item existente exceção", error); showStoreNotice(supabaseUserMessage(error), "error"); return false; }
 
