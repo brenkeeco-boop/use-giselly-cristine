@@ -33,9 +33,38 @@
         <div class="field"><label for="loginEmail">E-mail</label><input id="loginEmail" type="email" autocomplete="email" placeholder="seu@email.com" required></div>
         <div class="field"><label for="loginPassword">Senha</label><input id="loginPassword" type="password" autocomplete="current-password" placeholder="••••••••" required></div>
         <button class="btn btn-wine btn-block" id="loginSubmit" type="submit">Entrar</button>
-        <a href="#" class="auth-link" aria-disabled="true">Esqueci minha senha</a>
+        <a href="#" class="auth-link" id="forgotPasswordLink">Esqueci minha senha</a>
       </form>
       <div class="auth-panel" style="background:var(--bone-2);border-color:var(--line)"><h2>Ainda não tem conta?</h2><p style="color:var(--ink-soft);margin-bottom:1.2rem">Cadastre-se para acompanhar pedidos, salvar favoritos e ter uma experiência de compra mais rápida.</p><button class="btn btn-outline btn-block" type="button" data-goto="cadastrar">Criar minha conta</button></div>
+    </div>
+  </div>
+
+  <div id="tab-recuperar" class="tab-panel" style="display:none">
+    <form class="auth-panel recovery-panel" id="forgotForm" novalidate>
+      <h2>Redefinir minha senha</h2>
+      <p class="recovery-lead">Informe o e-mail da sua conta. Enviaremos um link para você criar uma nova senha.</p>
+      <div class="field"><label for="forgotEmail">E-mail</label><input id="forgotEmail" type="email" autocomplete="email" placeholder="seu@email.com" required></div>
+      <button class="btn btn-wine btn-block" id="forgotSubmit" type="submit">Enviar link de redefinição</button>
+      <button class="recovery-back" type="button" data-goto="entrar">Voltar para entrar</button>
+    </form>
+  </div>
+
+  <div id="tab-nova-senha" class="tab-panel" style="display:none">
+    <form class="auth-panel recovery-panel" id="resetPasswordForm" novalidate>
+      <h2>Criar nova senha</h2>
+      <p class="recovery-lead">Escolha uma nova senha para a sua conta. Use pelo menos 8 caracteres.</p>
+      <div class="field"><label for="newPassword">Nova senha</label><input id="newPassword" type="password" autocomplete="new-password" placeholder="••••••••" required></div>
+      <div class="field"><label for="newPasswordConfirmation">Confirmar nova senha</label><input id="newPasswordConfirmation" type="password" autocomplete="new-password" placeholder="••••••••" required></div>
+      <button class="btn btn-wine btn-block" id="resetPasswordSubmit" type="submit">Redefinir senha</button>
+    </form>
+  </div>
+
+  <div id="tab-senha-redefinida" class="tab-panel" style="display:none">
+    <div class="auth-panel recovery-panel recovery-done">
+      <span class="recovery-done-mark" aria-hidden="true">✓</span>
+      <h2>Senha redefinida</h2>
+      <p class="recovery-lead">Sua senha foi alterada com sucesso. Use a nova senha nos próximos acessos.</p>
+      <button class="btn btn-wine btn-block" id="recoveryDone" type="button">Ir para meu perfil</button>
     </div>
   </div>
 
