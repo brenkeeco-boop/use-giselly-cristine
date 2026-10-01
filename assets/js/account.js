@@ -204,10 +204,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
     button.disabled = false;
     if (error) showNotice(authMessage(error), "error");
-    else {
-      const returnTo = new URLSearchParams(location.search).get("returnTo");
-      if (returnTo) location.assign(returnTo);
-    }
+    else location.assign("index.html");
   });
 
   document.getElementById("signupForm").addEventListener("submit", async (event) => {
@@ -221,14 +218,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (password !== confirmation) return showNotice("As senhas não coincidem.", "error");
     const button = document.getElementById("signupSubmit");
     button.disabled = true;
-    const { data, error } = await supabaseClient.auth.signUp({
+    const { error } = await supabaseClient.auth.signUp({
       email,
       password,
       options: { data: { nome } }
     });
     button.disabled = false;
     if (error) return showNotice(authMessage(error), "error");
-    showNotice(data.session ? "Cadastro realizado com sucesso!" : "Cadastro realizado. Verifique seu e-mail para continuar.", "success");
+    location.assign("index.html");
   });
 
   document.getElementById("profileForm").addEventListener("submit", async (event) => {
