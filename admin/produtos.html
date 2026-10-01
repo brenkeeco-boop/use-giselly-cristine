@@ -120,7 +120,12 @@
         <span><b>Produto ativo</b><small>Desmarque para tirar o produto de circulação sem excluí-lo.</small></span>
       </label>
 
-      <div class="adm-soon adm-soon--inline"><p><b>Imagens</b> · o envio de fotos chegará em uma próxima etapa.</p></div>
+      <div class="adm-field adm-photos-field">
+        <label for="fImagens">Fotos do produto</label>
+        <input id="fImagens" name="imagens" type="file" accept="image/jpeg,image/png,image/webp" multiple aria-describedby="fImagensHelp">
+        <p class="adm-fieldhelp" id="fImagensHelp">JPG, PNG ou WebP, até 5 MB por foto. A primeira imagem é a principal.</p>
+        <div class="adm-photo-previews" id="fImagensPreview" aria-live="polite"></div>
+      </div>
     </div>
     <footer class="adm-dialog-foot">
       <button class="btn btn-outline" type="button" data-close>Cancelar</button>

@@ -831,6 +831,76 @@ padding:.9rem 1rem;
 text-align:left;
 }
 
+/* Fotos do produto */
+.adm-fieldhelp{
+margin:.35rem 0 0;
+font-size:var(--step--1);
+line-height:1.5;
+color:var(--ink-soft);
+}
+
+.adm-photo-previews{
+display:grid;
+grid-template-columns:repeat(auto-fill, minmax(7rem, 1fr));
+gap:.65rem;
+margin-top:.8rem;
+}
+
+.adm-photo-card{
+position:relative;
+min-width:0;
+border:1px solid var(--line);
+border-radius:var(--adm-radius);
+overflow:hidden;
+background:var(--bone);
+}
+
+.adm-photo-card img{
+display:block;
+width:100%;
+aspect-ratio:1;
+object-fit:cover;
+background:var(--bone-2);
+}
+
+.adm-photo-main{
+position:absolute;
+top:.35rem;
+left:.35rem;
+padding:.16rem .35rem;
+border-radius:2px;
+background:var(--wine);
+color:var(--white);
+font-size:.6rem;
+font-weight:600;
+letter-spacing:.06em;
+text-transform:uppercase;
+}
+
+.adm-photo-actions{
+display:flex;
+align-items:center;
+gap:.2rem;
+padding:.35rem;
+}
+
+.adm-photo-actions button{
+min-width:1.7rem;
+min-height:1.7rem;
+padding:.15rem .3rem;
+border:1px solid var(--line);
+border-radius:3px;
+background:var(--white);
+color:var(--ink-soft);
+font:inherit;
+font-size:.78rem;
+cursor:pointer;
+}
+
+.adm-photo-actions button:hover:not(:disabled){ border-color:var(--wine); color:var(--wine); }
+.adm-photo-actions button:disabled{ opacity:.45; cursor:default; }
+.adm-photo-actions .adm-photo-remove{ margin-left:auto; color:var(--error); }
+
 /* ---------- diálogos ---------- */
 
 .adm-dialog{

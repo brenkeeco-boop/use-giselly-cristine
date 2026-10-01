@@ -12,7 +12,10 @@
   "use strict";
 
   var TABLE = "produtos";
-  var COLS = "id,nome,slug,descricao,categoria,preco,preco_promocional,estoque,ativo,criado_em,atualizado_em";
+  var COLS = "id,nome,slug,descricao,categoria,preco,preco_promocional,imagens,image_url,estoque,ativo,criado_em,atualizado_em";
+  var IMAGE_BUCKET = "produtos";
+  var MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+  var IMAGE_TYPES = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
   var DERIVED_CATEGORIES = ["novidades", "promocoes"]; /* em products.js são regras (isNew/oldPrice), não categorias */
   var MAX_PRICE = 99999999.99;                          /* limite de numeric(10,2) */
   var MAX_STOCK = 999999;                               /* bem abaixo do limite do integer; evita números absurdos por engano */
@@ -23,9 +26,27 @@
   var editing = null;       /* produto em edição (null = criando) */
   var pendingDelete = null; /* produto aguardando confirmação de exclusão */
   var saving = false;
+  var photos = [];
 
   function db() { return window.supabaseClient; }
   function $(sel, root) { return (root || document).querySelector(sel); }
+
+  function productImageUrls(product) {
+    var urls = Array.isArray(product && product.imagens) ? product.imagens.filter(function (url) { return typeof url === "string" && url; }) : [];
+    if (product && typeof product.image_url === "string" && product.image_url && urls.indexOf(product.image_url) === -1) urls.unshift(product.image_url);
+    return urls;
+  }
+
+  function storagePathFromUrl(url) {
+    var marker = "/storage/v1/object/public/" + IMAGE_BUCKET + "/";
+    var index = typeof url === "string" ? url.indexOf(marker) : -1;
+    if (index === -1) return null;
+    try { return decodeURIComponent(url.slice(index + marker.length)); } catch (e) { return null; }
+  }
+
+  function revokePhotoPreviews() {
+    photos.forEach(function (photo) { if (photo.preview && photo.file) URL.revokeObjectURL(photo.preview); });
+  }
 
   function el(tag, attrs, kids) {
     var n = document.createElement(tag);
@@ -103,17 +124,22 @@
     return call(function () { return db().from(TABLE).select(COLS).order("criado_em", { ascending: false }); });
   }
 
-  function payloadFrom(v) {
-    return { nome: v.nome, descricao: v.descricao, categoria: v.categoria, preco: v.preco, preco_promocional: v.preco_promocional, estoque: v.estoque, ativo: v.ativo };
+  function payloadFrom(v, imageUrls) {
+    var payload = { nome: v.nome, descricao: v.descricao, categoria: v.categoria, preco: v.preco, preco_promocional: v.preco_promocional, estoque: v.estoque, ativo: v.ativo };
+    if (imageUrls) {
+      payload.imagens = imageUrls;
+      payload.image_url = imageUrls[0] || null;
+    }
+    return payload;
   }
 
-  async function createProduct(v) {
+  async function createProduct(v, imageUrls) {
     var taken = {};
     state.items.forEach(function (p) { taken[p.slug] = true; });
     var base = slugify(v.nome), n = 1, slug = base;
     while (taken[slug]) { n++; slug = base + "-" + n; }
     for (var attempt = 0; attempt < 6; attempt++) {
-      var body = payloadFrom(v); body.slug = slug;
+      var body = payloadFrom(v, imageUrls); body.slug = slug;
       var res = await call(function () { return db().from(TABLE).insert(body).select(COLS); });
       if (!res.error) return { ok: true, row: res.data && res.data[0] };
       var ex = explain(res.error);
@@ -290,6 +316,108 @@
     $("#pFormError").hidden = true;
   }
 
+  function renderPhotoPreviews() {
+    var box = $("#fImagensPreview");
+    box.replaceChildren();
+    photos.forEach(function (photo, index) {
+      var image = el("img", { src: photo.preview || photo.url, alt: "Foto " + (index + 1) + " do produto" });
+      var actions = el("div", { class: "adm-photo-actions" });
+      var up = el("button", { type: "button", "data-photo-up": String(index), "aria-label": "Mover foto para antes", text: "↑" });
+      var down = el("button", { type: "button", "data-photo-down": String(index), "aria-label": "Mover foto para depois", text: "↓" });
+      var remove = el("button", { type: "button", class: "adm-photo-remove", "data-photo-remove": String(index), "aria-label": "Remover foto", text: "Remover" });
+      up.disabled = index === 0; down.disabled = index === photos.length - 1;
+      actions.append(up, down, remove);
+      var card = el("div", { class: "adm-photo-card" }, [image, index === 0 ? el("span", { class: "adm-photo-main", text: "Principal" }) : null, actions]);
+      box.append(card);
+    });
+  }
+
+  function resetPhotos(product) {
+    revokePhotoPreviews();
+    photos = productImageUrls(product).map(function (url) { return { url: url, preview: url, file: null }; });
+    $("#fImagens").value = "";
+    renderPhotoPreviews();
+  }
+
+  function addSelectedPhotos(fileList) {
+    var invalid = [];
+    Array.prototype.forEach.call(fileList || [], function (file) {
+      if (!IMAGE_TYPES[file.type]) invalid.push(file.name + ": use JPG, PNG ou WebP.");
+      else if (file.size > MAX_IMAGE_BYTES) invalid.push(file.name + ": ultrapassa o limite de 5 MB.");
+      else photos.push({ file: file, preview: URL.createObjectURL(file), url: null });
+    });
+    renderPhotoPreviews();
+    if (invalid.length) {
+      var box = $("#pFormError"); box.textContent = invalid.join(" "); box.hidden = false;
+    }
+  }
+
+  function movePhoto(index, direction) {
+    var next = index + direction;
+    if (next < 0 || next >= photos.length) return;
+    var current = photos[index]; photos[index] = photos[next]; photos[next] = current;
+    renderPhotoPreviews();
+  }
+
+  function removePhoto(index) {
+    var photo = photos[index];
+    if (!photo) return;
+    if (photo.file && photo.preview) URL.revokeObjectURL(photo.preview);
+    photos.splice(index, 1);
+    renderPhotoPreviews();
+  }
+
+  function safeImagePath(file) {
+    var id = window.crypto && typeof window.crypto.randomUUID === "function"
+      ? window.crypto.randomUUID()
+      : Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 12);
+    return "products/" + id + "." + IMAGE_TYPES[file.type];
+  }
+
+  async function removeStorageFiles(paths) {
+    if (!paths.length) return { error: null };
+    return call(function () { return db().storage.from(IMAGE_BUCKET).remove(paths); });
+  }
+
+  function storageMessage(error) {
+    var code = (error && error.statusCode) || (error && error.status) || "";
+    var message = String((error && error.message) || "").toLowerCase();
+    if (code === 404 || /bucket.*not found/.test(message)) return "O bucket de fotos ainda não foi configurado. Execute admin/storage-produtos-schema.sql no Supabase.";
+    if (code === 401 || code === 403 || /permission|row-level security|not authorized/.test(message)) return "Sua conta não tem permissão para enviar fotos de produtos.";
+    if (code === 413 || /size|too large/.test(message)) return "Uma foto ultrapassa o limite de 5 MB.";
+    return "Não foi possível enviar uma das fotos. Nenhum produto foi salvo.";
+  }
+
+  async function prepareImages() {
+    var uploaded = [];
+    var urls = [];
+    try {
+      for (var i = 0; i < photos.length; i++) {
+        var photo = photos[i];
+        if (!photo.file) { urls.push(photo.url); continue; }
+        var path = safeImagePath(photo.file);
+        var upload = await call(function () {
+          return db().storage.from(IMAGE_BUCKET).upload(path, photo.file, { cacheControl: "31536000", upsert: false, contentType: photo.file.type });
+        });
+        if (upload.error) throw upload.error;
+        uploaded.push(path);
+        var publicUrl = db().storage.from(IMAGE_BUCKET).getPublicUrl(path).data.publicUrl;
+        urls.push(publicUrl);
+      }
+      return { ok: true, urls: urls, uploaded: uploaded };
+    } catch (error) {
+      await removeStorageFiles(uploaded);
+      return { ok: false, message: storageMessage(error) };
+    }
+  }
+
+  function removedExistingPaths() {
+    if (!editing) return [];
+    var remaining = photos.filter(function (photo) { return !photo.file; }).map(function (photo) { return photo.url; });
+    return productImageUrls(editing).filter(function (url) { return remaining.indexOf(url) === -1; })
+      .map(storagePathFromUrl).filter(Boolean);
+  }
+
   function openForm(product) {
     editing = product || null;
     clearErrors();
@@ -307,6 +435,7 @@
     $("#fPromo").value = editing ? toInput(editing.preco_promocional) : "";
     $("#fEstoque").value = editing ? String(editing.estoque == null ? 0 : editing.estoque) : "0";
     $("#fAtivo").checked = editing ? Boolean(editing.ativo) : true;
+    resetPhotos(editing);
 
     $("#fSlugLine").hidden = !editing;
     if (editing) $("#fSlug").textContent = editing.slug;
@@ -365,13 +494,23 @@
     }
     var wasEditing = editing;
     setSaving(true);
-    var res = wasEditing ? await updateProduct(wasEditing.id, payloadFrom(result.values)) : await createProduct(result.values);
+    var images = await prepareImages();
+    if (!images.ok) {
+      setSaving(false);
+      var imageError = $("#pFormError"); imageError.textContent = images.message; imageError.hidden = false;
+      return;
+    }
+    var res = wasEditing
+      ? await updateProduct(wasEditing.id, payloadFrom(result.values, images.urls))
+      : await createProduct(result.values, images.urls);
+    if (!res.ok && images.uploaded.length) await removeStorageFiles(images.uploaded);
     setSaving(false);
     if (!res.ok) {
       var box = $("#pFormError"); box.textContent = res.message; box.hidden = false; return;
     }
+    var removed = await removeStorageFiles(removedExistingPaths());
     dlg.close();
-    toast(wasEditing ? "Produto atualizado." : "Produto criado.", "success");
+    toast(removed.error ? "Produto salvo, mas uma foto removida ficou pendente no Storage." : (wasEditing ? "Produto atualizado." : "Produto criado."), removed.error ? "info" : "success");
     await reload(true);
     if (wasEditing) { var back = $('[data-edit="' + (window.CSS && CSS.escape ? CSS.escape(wasEditing.id) : wasEditing.id) + '"]'); if (back) back.focus(); }
     if (!wasEditing && res.row && !matches(res.row)) { /* não deixa o produto novo "sumir" atrás de um filtro */
@@ -440,6 +579,20 @@
     wireDialog(dlg, function () { return saving; });
     wireDialog($("#pConfirm"), function () { return $("#pConfirmOk").disabled; });
     form.addEventListener("submit", onSubmit);
+    $("#fImagens").addEventListener("change", function (event) {
+      clearErrors();
+      addSelectedPhotos(event.target.files);
+      event.target.value = "";
+    });
+    $("#fImagensPreview").addEventListener("click", function (event) {
+      var button = event.target.closest("button"); if (!button || saving) return;
+      var index = Number(button.getAttribute("data-photo-up") || button.getAttribute("data-photo-down") || button.getAttribute("data-photo-remove"));
+      if (!isFinite(index)) return;
+      if (button.hasAttribute("data-photo-up")) movePhoto(index, -1);
+      else if (button.hasAttribute("data-photo-down")) movePhoto(index, 1);
+      else if (button.hasAttribute("data-photo-remove")) removePhoto(index);
+    });
+    dlg.addEventListener("close", function () { if (!saving) resetPhotos(null); });
     /* o erro de um campo some assim que a pessoa volta a editá-lo (o do promocional também some ao mudar o preço, pois depende dele) */
     var clears = { fNome: ["eNome"], fCategoria: ["eCategoria"], fDescricao: ["eDescricao"], fPreco: ["ePreco", "ePromo"], fPromo: ["ePromo"], fEstoque: ["eEstoque"] };
     var inputOf = { eNome: "fNome", eCategoria: "fCategoria", eDescricao: "fDescricao", ePreco: "fPreco", ePromo: "fPromo", eEstoque: "fEstoque" };
