@@ -84,6 +84,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="assets/js/supabase.js"></script>
 <script src="assets/js/products.js"></script>
+<script src="assets/js/catalog.js"></script>
 <script src="assets/js/cart.js"></script>
 <script src="assets/js/ui.js"></script>
 <script>
@@ -96,34 +97,79 @@
   document.getElementById("crumbLabel").textContent = title;
   if (cat !== "todos") document.querySelector(`.f-cat[value="${cat}"]`) && (document.querySelector(`.f-cat[value="${cat}"]`).checked = true);
 
-  let list = getProductsByCategory(cat);
+  const gridEl = document.getElementById("productGrid");
+  const countEl = document.getElementById("resultCount");
+  const loadMoreEl = document.getElementById("loadMoreBtn");
+  const LOAD_ERROR_MSG = "Não foi possível carregar os produtos agora. Verifique sua conexão e tente novamente.";
+
+  /* Nada de PRODUCTS é lido antes de catalogReady terminar com sucesso.
+     list é sempre uma cópia, para ordenar sem mexer no array PRODUCTS. */
+  let list = [];
   let visible = 8;
+  let ready = false;
+
+  function showLoading(){
+    ready = false;
+    countEl.textContent = "Carregando…";
+    gridEl.innerHTML = `<div class="catalog-empty"><p>Carregando produtos…</p></div>`;
+    loadMoreEl.style.display = "none";
+  }
+
+  function showError(message){
+    ready = false;
+    countEl.textContent = "";
+    gridEl.innerHTML = `<div class="catalog-empty"><h2>Não foi possível carregar os produtos</h2><p></p><button type="button" class="btn btn-outline" id="retryCatalogBtn">Tentar novamente</button></div>`;
+    gridEl.querySelector("p").textContent = message || LOAD_ERROR_MSG;
+    loadMoreEl.style.display = "none";
+    document.getElementById("retryCatalogBtn").addEventListener("click", retryCatalog);
+  }
 
   function draw(){
-    document.getElementById("resultCount").textContent = `${list.length} peça${list.length !== 1 ? "s" : ""}`;
-    document.getElementById("productGrid").innerHTML = list.length
+    countEl.textContent = `${list.length} peça${list.length !== 1 ? "s" : ""}`;
+    gridEl.innerHTML = list.length
       ? list.slice(0, visible).map(productCardHTML).join("")
-      : `<div class="catalog-empty"><h2>Nenhuma peça encontrada</h2><p>Revise os filtros selecionados para ver outras opções.</p></div>`;
-    document.getElementById("loadMoreBtn").style.display = visible >= list.length ? "none" : "inline-flex";
+      : `<div class="catalog-empty"><h2>Nenhum produto encontrado.</h2>${PRODUCTS.length ? "<p>Revise os filtros selecionados para ver outras opções.</p>" : ""}</div>`;
+    loadMoreEl.style.display = visible >= list.length ? "none" : "inline-flex";
   }
-  draw();
 
-  document.getElementById("loadMoreBtn").addEventListener("click", () => { visible += 8; draw(); });
+  /* carregando → catalogReady → verificar resultado → renderizar */
+  async function initCatalog(readyPromise){
+    showLoading();
+    let result = null;
+    try { result = await readyPromise; } catch (e) { result = null; }
+    if (!result || result.ok !== true) {
+      showError(result && result.error && result.error.message);
+      return;
+    }
+    list = getProductsByCategory(cat).slice();
+    visible = 8;
+    ready = true;
+    draw();
+  }
+
+  function retryCatalog(){
+    if (window.UGCCatalog && typeof UGCCatalog.reload === "function") initCatalog(UGCCatalog.reload());
+    else location.reload();
+  }
+
+  loadMoreEl.addEventListener("click", () => { if (!ready) return; visible += 8; draw(); });
 
   document.getElementById("sortSelect").addEventListener("change", (e) => {
+    if (!ready) return;
     const v = e.target.value;
     if (v === "price-asc") list.sort((a,b) => a.price - b.price);
     else if (v === "price-desc") list.sort((a,b) => b.price - a.price);
     else if (v === "new") list.sort((a,b) => (b.isNew - a.isNew));
-    else list = getProductsByCategory(cat);
+    else list = getProductsByCategory(cat).slice();
     visible = 8;
     draw();
   });
 
   document.querySelectorAll(".f-cat").forEach(cb => {
     cb.addEventListener("change", () => {
+      if (!ready) return;
       const checked = [...document.querySelectorAll(".f-cat:checked")].map(c => c.value);
-      list = checked.length ? PRODUCTS.filter(p => checked.includes(p.category)) : getProductsByCategory(cat);
+      list = checked.length ? PRODUCTS.filter(p => checked.includes(p.category)) : getProductsByCategory(cat).slice();
       visible = 8;
       draw();
     });
@@ -132,6 +178,8 @@
   document.querySelectorAll(".size-opt").forEach(btn => {
     btn.addEventListener("click", () => btn.classList.toggle("selected"));
   });
+
+  initCatalog(window.catalogReady);
 </script>
 </body>
 </html>
