@@ -663,6 +663,19 @@ font-size:var(--step--1);
 color:var(--ink-soft);
 }
 
+.adm-td-stock{
+white-space:nowrap;
+font-variant-numeric:tabular-nums;
+}
+
+.adm-td-stock b{ font-weight:500; }
+
+.adm-stock-out{
+margin-left:.15rem;
+font-size:var(--step--1);
+color:var(--error);
+}
+
 .adm-td-status{ white-space:nowrap; }
 
 .adm-td-actions{
@@ -670,6 +683,7 @@ text-align:right; white-space:nowrap;
 }
 
 .adm-table tr.is-inactive .adm-td-name strong,
+.adm-table tr.is-inactive .adm-td-stock b,
 .adm-table tr.is-inactive .adm-td-price b{
 color:var(--ink-soft);
 }
@@ -987,14 +1001,25 @@ color:var(--ink-soft);
 }
 
 .adm-table td:nth-child(4){
+grid-column:1;
+grid-row:3;
+font-size:var(--step--1);
+color:var(--ink-soft);
+}
+
+.adm-table td:nth-child(4)::before{
+content:attr(data-label) ": ";
+}
+
+.adm-table td:nth-child(5){
 grid-column:2;
 grid-row:2;
 justify-self:end;
 }
 
-.adm-table td:nth-child(5){
+.adm-table td:nth-child(6){
 grid-column:1 / -1;
-grid-row:3;
+grid-row:4;
 padding-top:.6rem;
 text-align:left;
 border-top:1px dashed var(--line);

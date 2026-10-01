@@ -2,15 +2,16 @@
    Só LÊ do banco (contagens e os últimos pedidos). Não grava nada e não altera nenhuma tabela.
 
    De onde vem cada número hoje:
-   • Produtos → array PRODUCTS de assets/js/products.js (o catálogo ainda é um arquivo, não uma tabela).
+   • Produtos → tabela "produtos" (contagem real de linhas, ativos + inativos; excluído deixa de contar).
    • Pedidos  → tabela "pedidos"  (já usada por conta.html).
    • Clientes → tabela "perfis"    (já usada por conta.html).
    • Cupons   → ainda não existe tabela no projeto; o card fica "preparado".
-   Os nomes de tabela ficam em SOURCES: quando o banco de cupons/produtos existir, é só ligar aqui. */
+   Os nomes de tabela ficam em SOURCES: quando o banco de cupons existir, é só ligar aqui. */
 (function () {
   "use strict";
 
   var SOURCES = {
+    produtos: { table: "produtos" },
     pedidos: { table: "pedidos" },
     clientes: { table: "perfis" },
     cupons: { table: null }
@@ -53,13 +54,7 @@
       setKpi(name, "error", "—", describeError(res.error));
       return;
     }
-    setKpi(name, "ok", integer.format(res.count), okNote);
-  }
-
-  function loadProducts() {
-    var list = typeof PRODUCTS !== "undefined" && Array.isArray(PRODUCTS) ? PRODUCTS : null;
-    if (!list) return setKpi("produtos", "error", "—", "Catálogo indisponível");
-    setKpi("produtos", "ok", integer.format(list.length), list.length === 1 ? "peça no catálogo do site" : "peças no catálogo do site");
+    setKpi(name, "ok", integer.format(res.count), typeof okNote === "function" ? okNote(res.count) : okNote);
   }
 
   /* ---------- pedidos recentes ---------- */
@@ -122,9 +117,9 @@
   async function loadAll() {
     var btn = $("[data-refresh]");
     if (btn) btn.disabled = true;
-    loadProducts();
     setKpi("cupons", "soon", "—", "Em breve · ainda sem tabela");
     await Promise.all([
+      loadCount("produtos", function (n) { return n === 1 ? "produto cadastrado" : "produtos cadastrados"; }),
       loadCount("pedidos", "pedidos registrados"),
       loadCount("clientes", "clientes cadastrados"),
       loadRecentOrders()

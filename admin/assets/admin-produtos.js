@@ -12,11 +12,13 @@
   "use strict";
 
   var TABLE = "produtos";
-  var COLS = "id,nome,slug,descricao,categoria,preco,preco_promocional,ativo,criado_em,atualizado_em";
+  var COLS = "id,nome,slug,descricao,categoria,preco,preco_promocional,estoque,ativo,criado_em,atualizado_em";
   var DERIVED_CATEGORIES = ["novidades", "promocoes"]; /* em products.js são regras (isNew/oldPrice), não categorias */
   var MAX_PRICE = 99999999.99;                          /* limite de numeric(10,2) */
+  var MAX_STOCK = 999999;                               /* bem abaixo do limite do integer; evita números absurdos por engano */
 
   var brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+  var integer = new Intl.NumberFormat("pt-BR");
   var state = { items: [], q: "", cat: "", status: "", error: null };
   var editing = null;       /* produto em edição (null = criando) */
   var pendingDelete = null; /* produto aguardando confirmação de exclusão */
@@ -81,11 +83,12 @@
     var status = error && error.status;
     var msg = String((error && error.message) || "").toLowerCase();
     if (/failed to fetch|network|timeout/.test(msg)) return { kind: "network", text: "Sem conexão com o servidor. Verifique sua internet e tente novamente." };
+    if (code === "42703" || code === "PGRST204" || (/column/.test(msg) && /estoque/.test(msg))) return { kind: "nocolumn", text: "A coluna de estoque ainda não existe no Supabase." };
     if (code === "42P01" || code === "PGRST205" || status === 404) return { kind: "missing", text: "A tabela de produtos ainda não existe no Supabase." };
     if (code === "42501" || code === "PGRST301" || status === 401 || status === 403) return { kind: "denied", text: "Sem permissão para alterar os produtos com esta conta." };
     if (code === "23505") return { kind: "duplicate", text: "Já existe um produto com esse endereço." };
     if (code === "23514") {
-      return { kind: "invalid", text: msg.indexOf("promo") !== -1 ? "O preço promocional precisa ser menor que o preço." : "Algum valor está fora do permitido." };
+      return { kind: "invalid", text: msg.indexOf("promo") !== -1 ? "O preço promocional precisa ser menor que o preço." : msg.indexOf("estoque") !== -1 ? "O estoque não pode ser negativo." : "Algum valor está fora do permitido." };
     }
     return { kind: "other", text: "Não foi possível concluir a operação. Tente novamente." };
   }
@@ -101,7 +104,7 @@
   }
 
   function payloadFrom(v) {
-    return { nome: v.nome, descricao: v.descricao, categoria: v.categoria, preco: v.preco, preco_promocional: v.preco_promocional, ativo: v.ativo };
+    return { nome: v.nome, descricao: v.descricao, categoria: v.categoria, preco: v.preco, preco_promocional: v.preco_promocional, estoque: v.estoque, ativo: v.ativo };
   }
 
   async function createProduct(v) {
@@ -183,6 +186,10 @@
       return stateBox("Tabela de produtos não encontrada", err.text,
         [retry], el("p", { class: "adm-state-steps", text: "Abra o arquivo admin/produtos-schema.sql, cole no SQL Editor do Supabase e execute. Depois volte aqui e clique em “Tentar novamente”." }));
     }
+    if (err.kind === "nocolumn") {
+      return stateBox("Falta atualizar o banco de dados", err.text,
+        [retry], el("p", { class: "adm-state-steps", text: "Abra o arquivo admin/estoque-schema.sql, cole no SQL Editor do Supabase e execute. Depois volte aqui e clique em “Tentar novamente”." }));
+    }
     if (err.kind === "denied") {
       return stateBox("Sem permissão para ler os produtos", "O banco recusou a leitura para esta conta.",
         [retry], el("p", { class: "adm-state-steps", text: "Confirme que (1) esta conta tem o papel de administrador e você saiu e entrou de novo depois disso, e (2) o arquivo produtos-schema.sql foi executado — ele cria as permissões e a política de administrador." }));
@@ -195,6 +202,14 @@
     return el("td", { class: "adm-td-price", "data-label": "Preço" }, promo
       ? [el("b", { text: money(p.preco_promocional) }), el("s", { text: money(p.preco) })]
       : [el("b", { text: money(p.preco) })]);
+  }
+
+  function stockCell(p) {
+    var n = Number(p.estoque);
+    if (!isFinite(n) || n < 0) n = 0;
+    return el("td", { class: "adm-td-stock", "data-label": "Estoque" }, n > 0
+      ? [el("b", { text: integer.format(n) })]
+      : [el("b", { text: "0" }), " ", el("span", { class: "adm-stock-out", text: "Sem estoque" })]);
   }
 
   function statusCell(p) {
@@ -210,6 +225,7 @@
       el("td", { class: "adm-td-name", "data-label": "Produto" }, [el("strong", { text: p.nome }), el("span", { class: "adm-sub", text: p.slug })]),
       el("td", { "data-label": "Categoria", text: categoryLabel(p.categoria) }),
       priceCell(p),
+      stockCell(p),
       statusCell(p),
       el("td", { class: "adm-td-actions" }, [
         el("button", { class: "btn btn-outline adm-btn-sm", type: "button", "data-edit": p.id, "aria-label": "Editar " + p.nome, text: "Editar" }),
@@ -241,7 +257,7 @@
     }
     var head = el("tr", {}, [
       el("th", { scope: "col", text: "Produto" }), el("th", { scope: "col", text: "Categoria" }),
-      el("th", { scope: "col", text: "Preço" }), el("th", { scope: "col", text: "Status" }),
+      el("th", { scope: "col", text: "Preço" }), el("th", { scope: "col", text: "Estoque" }), el("th", { scope: "col", text: "Status" }),
       el("th", { scope: "col" }, [el("span", { class: "adm-sr", text: "Ações" })])
     ]);
     var body = el("tbody");
@@ -262,10 +278,10 @@
   var dlg, form;
 
   function showFieldError(field, text) {
-    var map = { nome: "Nome", categoria: "Categoria", descricao: "Descricao", preco: "Preco", promo: "Promo" };
+    var map = { nome: "Nome", categoria: "Categoria", descricao: "Descricao", preco: "Preco", promo: "Promo", estoque: "Estoque" };
     var p = $("#e" + map[field]);
     p.textContent = text; p.hidden = false;
-    var input = { nome: "#fNome", categoria: "#fCategoria", descricao: "#fDescricao", preco: "#fPreco", promo: "#fPromo" }[field];
+    var input = { nome: "#fNome", categoria: "#fCategoria", descricao: "#fDescricao", preco: "#fPreco", promo: "#fPromo", estoque: "#fEstoque" }[field];
     $(input).setAttribute("aria-invalid", "true");
   }
   function clearErrors() {
@@ -289,6 +305,7 @@
     $("#fDescricao").value = editing && editing.descricao ? editing.descricao : "";
     $("#fPreco").value = editing ? toInput(editing.preco) : "";
     $("#fPromo").value = editing ? toInput(editing.preco_promocional) : "";
+    $("#fEstoque").value = editing ? String(editing.estoque == null ? 0 : editing.estoque) : "0";
     $("#fAtivo").checked = editing ? Boolean(editing.ativo) : true;
 
     $("#fSlugLine").hidden = !editing;
@@ -314,6 +331,7 @@
     var descricao = $("#fDescricao").value.trim();
     var preco = parseBRL($("#fPreco").value);
     var promo = parseBRL($("#fPromo").value);
+    var estoqueText = $("#fEstoque").value.trim();
 
     if (!nome) errors.nome = "Informe o nome do produto.";
     if (!categoria) errors.categoria = "Escolha uma categoria.";
@@ -326,8 +344,11 @@
       else if (promo <= 0) errors.promo = "O preço promocional precisa ser maior que zero.";
       else if (typeof preco === "number" && !isNaN(preco) && promo >= preco) errors.promo = "Precisa ser menor que o preço.";
     }
+    if (estoqueText === "") errors.estoque = "Informe a quantidade em estoque (use 0 se não houver).";
+    else if (!/^\d+$/.test(estoqueText)) errors.estoque = "Use um número inteiro igual ou maior que zero, como 25.";
+    else if (Number(estoqueText) > MAX_STOCK) errors.estoque = "O estoque pode ter no máximo 999.999 unidades.";
     if (Object.keys(errors).length) return { errors: errors };
-    return { values: { nome: nome, categoria: categoria, descricao: descricao || null, preco: preco, preco_promocional: promo, ativo: $("#fAtivo").checked } };
+    return { values: { nome: nome, categoria: categoria, descricao: descricao || null, preco: preco, preco_promocional: promo, estoque: parseInt(estoqueText, 10), ativo: $("#fAtivo").checked } };
   }
 
   async function onSubmit(event) {
@@ -336,10 +357,10 @@
     clearErrors();
     var result = validate();
     if (result.errors) {
-      var order = ["nome", "categoria", "descricao", "preco", "promo"];
+      var order = ["nome", "categoria", "descricao", "preco", "promo", "estoque"];
       order.forEach(function (f) { if (result.errors[f]) showFieldError(f, result.errors[f]); });
       var first = order.filter(function (f) { return result.errors[f]; })[0];
-      $({ nome: "#fNome", categoria: "#fCategoria", descricao: "#fDescricao", preco: "#fPreco", promo: "#fPromo" }[first]).focus();
+      $({ nome: "#fNome", categoria: "#fCategoria", descricao: "#fDescricao", preco: "#fPreco", promo: "#fPromo", estoque: "#fEstoque" }[first]).focus();
       return;
     }
     var wasEditing = editing;
@@ -420,8 +441,8 @@
     wireDialog($("#pConfirm"), function () { return $("#pConfirmOk").disabled; });
     form.addEventListener("submit", onSubmit);
     /* o erro de um campo some assim que a pessoa volta a editá-lo (o do promocional também some ao mudar o preço, pois depende dele) */
-    var clears = { fNome: ["eNome"], fCategoria: ["eCategoria"], fDescricao: ["eDescricao"], fPreco: ["ePreco", "ePromo"], fPromo: ["ePromo"] };
-    var inputOf = { eNome: "fNome", eCategoria: "fCategoria", eDescricao: "fDescricao", ePreco: "fPreco", ePromo: "fPromo" };
+    var clears = { fNome: ["eNome"], fCategoria: ["eCategoria"], fDescricao: ["eDescricao"], fPreco: ["ePreco", "ePromo"], fPromo: ["ePromo"], fEstoque: ["eEstoque"] };
+    var inputOf = { eNome: "fNome", eCategoria: "fCategoria", eDescricao: "fDescricao", ePreco: "fPreco", ePromo: "fPromo", eEstoque: "fEstoque" };
     Object.keys(clears).forEach(function (id) {
       var clear = function () {
         clears[id].forEach(function (eid) { var p = $("#" + eid); p.hidden = true; p.textContent = ""; $("#" + inputOf[eid]).removeAttribute("aria-invalid"); });
