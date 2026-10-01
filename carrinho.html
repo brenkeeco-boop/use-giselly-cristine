@@ -27,6 +27,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="assets/js/supabase.js"></script>
 <script src="assets/js/products.js"></script>
+<script src="assets/js/catalog.js"></script>
 <script src="assets/js/cart.js"></script>
 <script src="assets/js/ui.js"></script>
 <script>
@@ -93,7 +94,12 @@
       </div>`;
   }
 
-  renderCartPage();
+  let catalogLoaded = false;
+  (async function initCartPage(){
+    const result = await window.catalogReady;
+    catalogLoaded = Boolean(result && result.ok);
+    renderCartPage();
+  })();
 
   document.getElementById("cartContent").addEventListener("click", async (e) => {
     const minus = e.target.closest("[data-qty-minus]");
@@ -103,7 +109,9 @@
     if (plus){ const i = +plus.dataset.qtyPlus; await updateCartQty(i, getCart()[i].qty + 1); renderCartPage(); }
     if (remove){ await removeFromCart(+remove.dataset.remove); renderCartPage(); }
   });
-  document.addEventListener("ugc:cart-updated", renderCartPage);
+  document.addEventListener("ugc:cart-updated", () => {
+    if (catalogLoaded) renderCartPage();
+  });
 </script>
 </body>
 </html>

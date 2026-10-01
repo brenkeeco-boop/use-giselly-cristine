@@ -122,7 +122,9 @@ async function handleSession(session){
   setAccountState(session?.user);
   if (lockedTab) return applyLockedTab(session);
   if (session?.user){
-    try { await syncCloudCartToLocal(); await syncCloudFavoritesToLocal(); } catch {}
+    try {
+      await Promise.all([loadCloudCart(), loadCloudFavorites()]);
+    } catch {}
     await loadProfile(session.user);
     if (lockedTab) return applyLockedTab(session);
     const requestedTab = new URLSearchParams(location.search).get("tab");
@@ -172,10 +174,12 @@ async function loadPreferences(){
   document.getElementById("ordersPreference").checked = data?.receber_notificacoes_pedido ?? true;
 }
 
-function renderFavorites(){
+async function renderFavorites(){
   const favs = getFavorites();
   const grid = document.getElementById("favGrid");
   const empty = document.getElementById("favEmpty");
+  const result = await window.catalogReady;
+  if (!result || !result.ok) return;
   if (favs.length === 0){ grid.innerHTML = ""; empty.style.display = "block"; return; }
   empty.style.display = "none";
   grid.innerHTML = favs.map(id => getProductById(id)).filter(Boolean).map(productCardHTML).join("");
@@ -183,6 +187,9 @@ function renderFavorites(){
 
 document.addEventListener("DOMContentLoaded", async () => {
   mountLayout();
+  document.addEventListener("ugc:favorites-updated", () => {
+    if (currentUser && document.getElementById("tab-favoritos").style.display !== "none") renderFavorites();
+  });
   document.querySelectorAll(".tab-btn").forEach(button => button.addEventListener("click", () => showTab(button.dataset.tab)));
   document.querySelectorAll("[data-goto]").forEach(button => button.addEventListener("click", () => showTab(button.dataset.goto)));
 

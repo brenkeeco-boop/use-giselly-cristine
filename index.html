@@ -143,12 +143,21 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="assets/js/supabase.js"></script>
 <script src="assets/js/products.js"></script>
+<script src="assets/js/catalog.js"></script>
 <script src="assets/js/cart.js"></script>
 <script src="assets/js/ui.js"></script>
 <script>
   mountLayout();
-  document.getElementById("newArrivals").innerHTML = PRODUCTS.filter(p => p.isNew).slice(0,4).map(productCardHTML).join("");
-  document.getElementById("featured").innerHTML = PRODUCTS.slice(4,8).map(productCardHTML).join("");
+
+  async function renderHomeProducts(){
+    const result = await window.catalogReady;
+    if (!result || !result.ok) return;
+
+    document.getElementById("newArrivals").innerHTML = PRODUCTS.slice(0, 4).map(productCardHTML).join("");
+    document.getElementById("featured").innerHTML = PRODUCTS.slice(4, 8).map(productCardHTML).join("");
+  }
+
+  renderHomeProducts();
   document.getElementById("perkTruck").innerHTML = ICONS.truck;
   document.getElementById("perkShield").innerHTML = ICONS.shield;
   document.getElementById("perkChat").innerHTML = ICONS.chat;

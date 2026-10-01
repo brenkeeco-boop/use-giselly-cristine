@@ -350,7 +350,10 @@ function bindLayoutEvents(){
     if (quickAdd){
       console.log("[DEBUG] data-quickadd acionado", { productId:quickAdd.dataset.quickadd });
       const p = getProductById(quickAdd.dataset.quickadd);
-      const added = await addToCart(p.id, p.sizes[Math.floor(p.sizes.length/2)], p.colors[0].name, 1);
+      if (!p) return;
+      const size = Array.isArray(p.sizes) && p.sizes.length ? p.sizes[Math.floor(p.sizes.length / 2)] : "";
+      const color = Array.isArray(p.colors) && p.colors.length ? p.colors[0].name : "";
+      const added = await addToCart(p.id, size, color, 1);
       if (!added) return;
       quickAdd.textContent = "Adicionado ✓";
       setTimeout(() => quickAdd.textContent = "Adicionar à sacola", 1400);
