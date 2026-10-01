@@ -37,6 +37,7 @@
      images        [] quando não há imagem — URLs escapadas para atributo HTML
      isNew         false (a regra de novidades será definida depois)
      sizes, colors []  (tamanhos e cores ficam para uma etapa futura; nada é inventado)
+     estoque       inteiro >= 0 vindo de produtos.estoque; null quando ausente ou inválido
      rawName, rawDescription, rawImages
                    mesmos valores SEM escape, para uso em textContent, document.title e para
                    gravar no banco (nome_produto/imagem_produto). Nunca use em innerHTML. */
@@ -47,7 +48,7 @@
 
   var TABLE = "produtos";
   /* Somente colunas públicas. Não pedimos ativo, atualizado_em nem id interno. */
-  var COLUMNS = "slug,nome,descricao,categoria,preco,preco_promocional,imagens,image_url";
+  var COLUMNS = "slug,nome,descricao,categoria,preco,preco_promocional,imagens,image_url,estoque";
   var TIMEOUT_MS = 12000;
   var FRIENDLY_ERROR = "Não foi possível carregar os produtos agora. Verifique sua conexão e tente novamente.";
   var SLUG_RE = /^[a-z0-9]+(-[a-z0-9]+)*$/;      /* mesmo formato do check produtos_slug_ck */
@@ -83,6 +84,12 @@
     if (value === null || value === undefined || value === "") return null;
     var n = Number(value);
     return isFinite(n) ? n : null;
+  }
+
+  /* Estoque: só inteiro >= 0 (tipo number). Ausente ou inválido → null. Nunca inventa valor. */
+  function toStock(value) {
+    if (typeof value !== "number" || !Number.isInteger(value) || value < 0) return null;
+    return value === 0 ? 0 : value;
   }
 
   /* ---------- adaptador: linha do banco → formato de products.js ---------- */
@@ -123,6 +130,7 @@
       isNew: false,
       sizes: [],
       colors: [],
+      estoque: toStock(row.estoque),
       rawName: nome,
       rawDescription: rawDescription,
       rawImages: rawImages

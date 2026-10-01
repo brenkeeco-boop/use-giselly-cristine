@@ -37,27 +37,88 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="assets/js/supabase.js"></script>
 <script src="assets/js/products.js"></script>
+<script src="assets/js/catalog.js"></script>
 <script src="assets/js/cart.js"></script>
 <script src="assets/js/ui.js"></script>
 <script>
   mountLayout();
-  const id = new URLSearchParams(location.search).get("id");
-  const product = getProductById(id) || PRODUCTS[0];
+  const pageEl = document.getElementById("productPage");
+  const relatedEl = document.getElementById("relatedGrid");
+  const crumbCatEl = document.getElementById("crumbCat");
+  const crumbNameEl = document.getElementById("crumbName");
+  const productId = new URLSearchParams(location.search).get("id");
+  const LOAD_ERROR_MSG = "Não foi possível carregar os produtos agora. Verifique sua conexão e tente novamente.";
+  const relatedSection = relatedEl.closest("section");
+  let pageBound = false;
 
-  document.title = `${product.name} — Use Giselly Cristine`;
-  document.getElementById("crumbCat").textContent = CATEGORY_LABELS[product.category];
-  document.getElementById("crumbCat").href = `catalogo.html?cat=${product.category}`;
-  document.getElementById("crumbName").textContent = product.name;
+  function setRelatedVisible(show){ if (relatedSection) relatedSection.style.display = show ? "" : "none"; }
 
-  document.getElementById("productPage").innerHTML = `
+  function showLoading(){
+    document.title = "Carregando… — Use Giselly Cristine";
+    crumbNameEl.textContent = "Carregando…";
+    pageEl.innerHTML = `<div class="catalog-empty"><p>Carregando produto…</p></div>`;
+    relatedEl.innerHTML = "";
+    setRelatedVisible(false);
+  }
+
+  function showError(message){
+    document.title = "Erro — Use Giselly Cristine";
+    crumbNameEl.textContent = "Produto";
+    pageEl.innerHTML = `<div class="catalog-empty"><h2>Não foi possível carregar o produto</h2><p></p><button type="button" class="btn btn-outline" id="retryProductBtn">Tentar novamente</button></div>`;
+    pageEl.querySelector("p").textContent = message || LOAD_ERROR_MSG;
+    relatedEl.innerHTML = "";
+    setRelatedVisible(false);
+    document.getElementById("retryProductBtn").addEventListener("click", retryProduct);
+  }
+
+  function showNotFound(){
+    document.title = "Produto não encontrado — Use Giselly Cristine";
+    crumbNameEl.textContent = "Produto não encontrado";
+    pageEl.innerHTML = `<div class="catalog-empty"><h2>Produto não encontrado</h2><p>Este produto não existe ou não está mais disponível.</p><a href="catalogo.html" class="btn btn-outline">Ver catálogo</a></div>`;
+    relatedEl.innerHTML = "";
+    setRelatedVisible(false);
+  }
+
+  /* carregando → catalogReady → verificar resultado → localizar produto → renderizar */
+  async function initProduct(readyPromise){
+    showLoading();
+    let result = null;
+    try { result = await readyPromise; } catch (e) { result = null; }
+    if (!result || result.ok !== true){ showError(result && result.error && result.error.message); return; }
+    const product = productId ? getProductById(productId) : null;
+    if (!product){ showNotFound(); return; }
+    renderProduct(product);
+  }
+
+  function retryProduct(){
+    if (window.UGCCatalog && typeof UGCCatalog.reload === "function") initProduct(UGCCatalog.reload());
+    else location.reload();
+  }
+
+  function renderProduct(product){
+    /* product.name / description / category / images já vêm escapados do catalog.js (seguros para innerHTML).
+       Para textContent e document.title usa-se rawName. product.estoque é o estoque real (inteiro ou null);
+       nesta etapa ele só fica disponível, sem alterar nenhuma regra de compra. */
+    const catLabel = CATEGORY_LABELS[product.category] || product.category;
+    const hasColors = product.colors.length > 0;
+    const hasSizes = product.sizes.length > 0;
+    const images = product.images;
+
+    document.title = `${product.rawName} — Use Giselly Cristine`;
+    crumbCatEl.innerHTML = catLabel;
+    crumbCatEl.href = `catalogo.html?cat=${encodeURIComponent(product.category)}`;
+    crumbNameEl.textContent = product.rawName;
+
+    pageEl.dataset.estoque = product.estoque === null ? "" : String(product.estoque);
+    pageEl.innerHTML = `
     <div class="gallery">
-      <div class="gallery-main"><img id="mainImg" src="${product.images[0]}" alt="${product.name}"></div>
+      <div class="gallery-main">${images.length ? `<img id="mainImg" src="${images[0]}" alt="${product.name}">` : ""}</div>
       <div class="gallery-thumbs">
-        ${product.images.map((img, i) => `<button data-img="${img}" class="${i===0?'active':''}"><img src="${img}" alt=""></button>`).join("")}
+        ${images.map((img, i) => `<button data-img="${img}" class="${i===0?'active':''}"><img src="${img}" alt=""></button>`).join("")}
       </div>
     </div>
     <div class="pd-details">
-      <span class="label">${CATEGORY_LABELS[product.category]}</span>
+      <span class="label">${catLabel}</span>
       <h1 class="pd-name">${product.name}</h1>
       <div class="pd-price">
         ${product.oldPrice ? `<span class="old">${formatBRL(product.oldPrice)}</span><span class="now">${formatBRL(product.price)}</span>` : `<span>${formatBRL(product.price)}</span>`}
@@ -65,19 +126,19 @@
       <p class="pd-installment">em até 6x de ${formatBRL(product.price/6)} sem juros ou 10% off no Pix</p>
       <p class="pd-desc">${product.description}</p>
 
-      <div class="pd-option">
+      ${hasColors ? `<div class="pd-option">
         <div class="opt-head"><span>Cor: <strong id="colorLabel">${product.colors[0].name}</strong></span></div>
         <div class="swatch-row" id="colorRow">
           ${product.colors.map((c,i) => `<button type="button" class="swatch ${i===0?'selected':''}" style="background:${c.hex}" data-color="${c.name}" aria-label="Selecionar cor ${c.name}" aria-pressed="${i===0}"></button>`).join("")}
         </div>
-      </div>
+      </div>` : ""}
 
-      <div class="pd-option">
+      ${hasSizes ? `<div class="pd-option">
         <div class="opt-head"><span>Tamanho</span><a href="#" class="guide-link" id="sizeGuideLink" data-open-size-guide>guia de medidas</a></div>
         <div class="size-row" id="sizeRow">
           ${product.sizes.map((s,i) => `<button class="size-opt ${i===0?'selected':''}" data-size="${s}">${s}</button>`).join("")}
         </div>
-      </div>
+      </div>` : ""}
 
       <div class="pd-actions">
         <button class="btn btn-wine" id="addToCartBtn">Adicionar ao carrinho</button>
@@ -100,12 +161,32 @@
       </div>
     </div>`;
 
-  document.getElementById("relatedGrid").innerHTML = PRODUCTS.filter(p => p.category === product.category && p.id !== product.id).slice(0,4).map(productCardHTML).join("");
+    relatedEl.innerHTML = PRODUCTS.filter(p => p.category === product.category && p.id !== product.id).slice(0,4).map(productCardHTML).join("");
+    setRelatedVisible(relatedEl.children.length > 0);
+    document.querySelectorAll("[data-fav]").forEach(b => b.classList.toggle("active", isFavorite(b.dataset.fav)));
 
-  document.getElementById("productPage").addEventListener("click", (e) => {
+    /* Produtos do banco ainda não têm tamanhos/cores cadastrados. Quando não há opção a escolher,
+       envia texto vazio: nada é inventado. (null não serve: cart.js compara com .eq("tamanho", ...),
+       e .eq(col, null) não casa com NULL no banco.) */
+    document.getElementById("addToCartBtn").addEventListener("click", async () => {
+      const sizeEl = document.querySelector("#sizeRow .size-opt.selected");
+      const colorEl = document.getElementById("colorLabel");
+      const size = sizeEl ? sizeEl.dataset.size : "";
+      const color = colorEl ? colorEl.textContent : "";
+      const added = await addToCart(product.id, size, color, 1);
+      if (!added) return;
+      const btn = document.getElementById("addToCartBtn");
+      btn.textContent = "Adicionado à sacola ✓";
+      setTimeout(() => btn.textContent = "Adicionar ao carrinho", 1500);
+    });
+  }
+
+  /* Delegação de cliques: registrada uma única vez, vale para qualquer re-renderização. */
+  pageEl.addEventListener("click", (e) => {
     const thumb = e.target.closest("[data-img]");
     if (thumb){
-      document.getElementById("mainImg").src = thumb.dataset.img;
+      const main = document.getElementById("mainImg");
+      if (main) main.src = thumb.dataset.img;
       document.querySelectorAll(".gallery-thumbs button").forEach(b => b.classList.remove("active"));
       thumb.classList.add("active");
     }
@@ -123,16 +204,7 @@
     }
   });
 
-  document.getElementById("addToCartBtn").addEventListener("click", async () => {
-    console.log("[DEBUG] addToCartBtn acionado", { productId: product.id });
-    const size = document.querySelector("#sizeRow .size-opt.selected").dataset.size;
-    const color = document.getElementById("colorLabel").textContent;
-    const added = await addToCart(product.id, size, color, 1);
-    if (!added) return;
-    const btn = document.getElementById("addToCartBtn");
-    btn.textContent = "Adicionado à sacola ✓";
-    setTimeout(() => btn.textContent = "Adicionar ao carrinho", 1500);
-  });
+  initProduct(window.catalogReady);
 </script>
 </body>
 </html>
