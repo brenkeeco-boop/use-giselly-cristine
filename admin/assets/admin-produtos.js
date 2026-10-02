@@ -16,13 +16,12 @@
   var IMAGE_BUCKET = "produtos";
   var MAX_IMAGE_BYTES = 5 * 1024 * 1024;
   var IMAGE_TYPES = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
-  var DERIVED_CATEGORIES = ["novidades", "promocoes"]; /* em products.js são regras (isNew/oldPrice), não categorias */
   var MAX_PRICE = 99999999.99;                          /* limite de numeric(10,2) */
   var MAX_STOCK = 999999;                               /* bem abaixo do limite do integer; evita números absurdos por engano */
 
   var brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
   var integer = new Intl.NumberFormat("pt-BR");
-  var state = { items: [], q: "", cat: "", status: "", error: null };
+  var state = { items: [], categories: [], q: "", cat: "", status: "", error: null };
   var editing = null;       /* produto em edição (null = criando) */
   var pendingDelete = null; /* produto aguardando confirmação de exclusão */
   var saving = false;
@@ -82,14 +81,12 @@
   function money(n) { return brl.format(Number(n)); }
 
   function categoryLabel(value) {
-    var labels = typeof CATEGORY_LABELS !== "undefined" ? CATEGORY_LABELS : {};
-    return labels[value] || capitalize(value);
+    var category = state.categories.filter(function (c) { return c.slug === value; })[0];
+    return category ? category.nome : capitalize(value);
   }
-  /* Categorias oferecidas: as reais de products.js + qualquer outra que já exista no banco. */
+  /* Categorias do banco; um slug já presente em produto legado continua disponível para não apagar dados. */
   function allCategories() {
-    var labels = typeof CATEGORY_LABELS !== "undefined" ? CATEGORY_LABELS : {};
-    var list = Object.keys(labels).filter(function (k) { return DERIVED_CATEGORIES.indexOf(k) === -1; })
-      .map(function (k) { return { value: k, label: labels[k] }; });
+    var list = state.categories.map(function (c) { return { value: c.slug, label: c.nome }; });
     var seen = {};
     list.forEach(function (c) { seen[c.value] = true; });
     state.items.forEach(function (p) {
@@ -122,6 +119,10 @@
   /* ---------- acesso ao banco ---------- */
   async function fetchAll() {
     return call(function () { return db().from(TABLE).select(COLS).order("criado_em", { ascending: false }); });
+  }
+
+  async function fetchCategories() {
+    return call(function () { return db().from("categorias").select("id,slug,nome,ordem").order("ordem", { ascending: true }).order("nome", { ascending: true }); });
   }
 
   function payloadFrom(v, imageUrls) {
@@ -293,9 +294,10 @@
 
   async function reload(silent) {
     if (silent) $("[data-list]").setAttribute("aria-busy", "true"); else renderLoading();
-    var res = await fetchAll();
-    if (res.error) { state.error = explain(res.error); state.items = []; }
-    else { state.error = null; state.items = res.data || []; }
+    var results = await Promise.all([fetchAll(), fetchCategories()]);
+    var res = results[0], categories = results[1];
+    if (res.error || categories.error) { state.error = explain(res.error || categories.error); state.items = []; state.categories = []; }
+    else { state.error = null; state.items = res.data || []; state.categories = categories.data || []; }
     rebuildCategoryFilter();
     renderList();
   }

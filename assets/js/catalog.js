@@ -193,6 +193,9 @@
     try {
       if (typeof PRODUCTS === "undefined" || !Array.isArray(PRODUCTS)) throw fail("setup", null);
 
+      /* Os rótulos e filtros de categoria são carregados da mesma fonte pública. */
+      if (window.categoryReady) await window.categoryReady;
+
       var rows = await fetchRows();
       var items = [];
       var skipped = 0;

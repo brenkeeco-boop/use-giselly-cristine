@@ -30,7 +30,7 @@
 
     { id: "produtos", label: "Produtos", icon: "tag", href: "produtos.html" },
 
-    { id: "categorias", label: "Categorias", icon: "grid" },
+    { id: "categorias", label: "Categorias", icon: "grid", href: "categorias.html" },
 
     { id: "pedidos", label: "Pedidos", icon: "bag" },
 

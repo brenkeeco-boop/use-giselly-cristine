@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex, nofollow">
+<title>Categorias — Painel Use Giselly Cristine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/tokens.css"><link rel="stylesheet" href="assets/admin.css">
+</head>
+<body class="adm adm-guard">
+<div class="adm-boot" id="admBoot" role="status"><p data-boot-msg>Verificando acesso…</p><button class="btn btn-outline" type="button" data-boot-retry hidden>Tentar novamente</button></div>
+<noscript><p class="adm-noscript">Ative o JavaScript para usar o painel administrativo.</p></noscript>
+<div class="adm-shell"><header class="adm-top" id="admTop"></header><div class="adm-backdrop" id="admBackdrop"></div><aside class="adm-side" id="admSide" aria-label="Menu do painel"></aside>
+<div class="adm-main"><main class="adm-content">
+  <header class="adm-pagehead"><div><p class="adm-eyebrow">Catálogo</p><h1>Categorias</h1></div><button class="btn btn-wine adm-new" type="button" data-new>Nova categoria</button></header>
+  <p class="adm-hint adm-hint--top">Crie e organize as categorias disponíveis para os produtos. Categorias que já possuem produtos não podem ser excluídas.</p>
+  <p class="adm-count" data-count aria-live="polite"></p>
+  <section class="adm-panel adm-listpanel" aria-label="Lista de categorias"><div data-list aria-busy="true"></div></section>
+</main></div></div>
+<dialog class="adm-dialog adm-dialog--sm" id="cDialog" aria-labelledby="cDialogTitle"><form class="adm-dialog-form" id="cForm" novalidate>
+  <header class="adm-dialog-head"><h2 id="cDialogTitle">Nova categoria</h2><button class="adm-iconbtn adm-iconbtn--dark" type="button" data-close aria-label="Fechar">×</button></header>
+  <div class="adm-dialog-body"><div class="adm-alert adm-alert--error" id="cFormError" role="alert" hidden></div>
+    <div class="adm-field"><label for="cNome">Nome</label><input id="cNome" maxlength="60" autocomplete="off" aria-describedby="cNomeError"><p class="adm-fielderr" id="cNomeError" hidden></p></div>
+    <div class="adm-field"><label for="cSlug">Slug</label><input id="cSlug" maxlength="80" autocomplete="off" spellcheck="false" aria-describedby="cSlugHelp cSlugError"><p class="adm-fieldhelp" id="cSlugHelp">Gerado automaticamente a partir do nome. Você pode ajustar se necessário.</p><p class="adm-fielderr" id="cSlugError" hidden></p></div>
+  </div><footer class="adm-dialog-foot"><button class="btn btn-outline" type="button" data-close>Cancelar</button><button class="btn btn-wine" type="submit" id="cSave">Salvar categoria</button></footer>
+</form></dialog>
+<dialog class="adm-dialog adm-dialog--sm" id="cConfirm" aria-labelledby="cConfirmTitle" aria-describedby="cConfirmText"><div class="adm-dialog-form"><header class="adm-dialog-head"><h2 id="cConfirmTitle">Excluir categoria?</h2></header><div class="adm-dialog-body"><p id="cConfirmText" class="adm-confirm-text"></p><div class="adm-alert adm-alert--error" id="cConfirmError" role="alert" hidden></div></div><footer class="adm-dialog-foot"><button class="btn btn-outline" type="button" id="cConfirmCancel">Cancelar</button><button class="btn adm-btn-danger" type="button" id="cConfirmOk">Excluir</button></footer></div></dialog>
+<div class="adm-toasts" id="admToasts" role="status" aria-live="polite"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="../assets/js/supabase.js"></script><script src="assets/admin-auth.js"></script><script src="assets/admin-shell.js"></script><script src="assets/admin-categorias.js"></script>
+</body></html>

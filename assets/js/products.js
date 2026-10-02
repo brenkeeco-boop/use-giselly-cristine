@@ -150,15 +150,8 @@ const PRODUCTS = [
   }
 ];
 
-const CATEGORY_LABELS = {
-  vestidos: "Vestidos",
-  conjuntos: "Conjuntos",
-  blusas: "Blusas",
-  calcas: "Calças",
-  saias: "Saias",
-  novidades: "Novidades",
-  promocoes: "Promoções"
-};
+/* Preenchido por assets/js/categories.js a partir de public.categorias. */
+var CATEGORY_LABELS = {};
 
 function formatBRL(v){
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
