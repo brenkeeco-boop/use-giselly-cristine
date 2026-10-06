@@ -16,18 +16,24 @@
 <div id="headerMount"></div>
 
 <main class="wrap">
-  <p class="breadcrumb"><a href="index.html">Início</a><span class="sep">/</span><span id="crumbLabel">Catálogo</span></p>
-
   <div class="catalog-head">
     <h1 id="catTitle">Todos os produtos</h1>
+    <p class="breadcrumb catalog-breadcrumb"><a href="index.html">Início</a><span class="sep">/</span><span id="crumbLabel">Todos os produtos</span></p>
     <div class="catalog-toolbar">
-      <span class="label" id="resultCount">12 peças</span>
-      <select class="sort-select" id="sortSelect">
-        <option value="relevance">Ordenar por relevância</option>
+      <details class="category-menu" id="categoryMenu">
+        <summary>Categoria</summary>
+        <div class="category-options" id="categoryOptions" role="menu" aria-label="Categorias"></div>
+      </details>
+      <label class="catalog-sort-control">
+        <span class="visually-hidden">Ordenar produtos</span>
+        <select class="sort-select" id="sortSelect" aria-label="Ordenar produtos">
+        <option value="relevance">Ordenar</option>
         <option value="price-asc">Menor preço</option>
         <option value="price-desc">Maior preço</option>
         <option value="new">Novidades primeiro</option>
-      </select>
+        </select>
+      </label>
+      <span class="visually-hidden" id="resultCount" aria-live="polite">12 peças</span>
     </div>
   </div>
 
@@ -93,7 +99,7 @@
   const cat = params.get("cat") || "todos";
   mountLayout(cat !== "todos" ? cat : null);
 
-  const title = CATEGORY_LABELS[cat] || "Todos os produtos";
+  let title = CATEGORY_LABELS[cat] || "Todos os produtos";
   document.getElementById("catTitle").textContent = title;
   document.getElementById("crumbLabel").textContent = title;
   if (cat !== "todos") document.querySelector(`.f-cat[value="${cat}"]`) && (document.querySelector(`.f-cat[value="${cat}"]`).checked = true);
@@ -101,6 +107,8 @@
   const gridEl = document.getElementById("productGrid");
   const countEl = document.getElementById("resultCount");
   const loadMoreEl = document.getElementById("loadMoreBtn");
+  const categoryOptionsEl = document.getElementById("categoryOptions");
+  const categoryMenuEl = document.getElementById("categoryMenu");
   const LOAD_ERROR_MSG = "Não foi possível carregar os produtos agora. Verifique sua conexão e tente novamente.";
 
   /* Nada de PRODUCTS é lido antes de catalogReady terminar com sucesso.
@@ -142,15 +150,32 @@
       showError(result && result.error && result.error.message);
       return;
     }
+    title = CATEGORY_LABELS[cat] || "Todos os produtos";
+    document.getElementById("catTitle").textContent = title;
+    document.getElementById("crumbLabel").textContent = title;
     list = getProductsByCategory(cat).slice();
     visible = 8;
     ready = true;
+    renderCategoryMenu();
     draw();
   }
 
   function retryCatalog(){
     if (window.UGCCatalog && typeof UGCCatalog.reload === "function") initCatalog(UGCCatalog.reload());
     else location.reload();
+  }
+
+  function renderCategoryMenu(){
+    const categories = window.UGCCategories && typeof window.UGCCategories.all === "function"
+      ? window.UGCCategories.all()
+      : [];
+    const allCategories = [{ slug: "todos", nome: "Todos os produtos" }].concat(categories);
+    categoryOptionsEl.innerHTML = allCategories.map((category) => {
+      const isActive = category.slug === cat;
+      const destination = category.slug === "todos" ? "catalogo.html" : `catalogo.html?cat=${encodeURIComponent(category.slug)}`;
+      return `<a href="${destination}" role="menuitem"${isActive ? ' aria-current="page"' : ""}>${category.nome}</a>`;
+    }).join("");
+    categoryMenuEl.querySelector("summary").textContent = cat === "todos" ? "Categoria" : title;
   }
 
   loadMoreEl.addEventListener("click", () => { if (!ready) return; visible += 8; draw(); });
