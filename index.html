@@ -21,6 +21,7 @@
   <link rel="stylesheet" href="assets/css/layout.css" />
   <link rel="stylesheet" href="assets/css/components.css" />
   <link rel="stylesheet" href="assets/css/header.css" />
+  <link rel="stylesheet" href="assets/css/home.css" />
 </head>
 
 <body>
@@ -30,27 +31,9 @@
 <main>
 
   <!-- HERO -->
-  <section class="hero">
-    <div class="hero-copy">
-      <span class="label">coleção primavera 26</span>
-
-      <h1>Vestir-se é uma forma de dizer quem você é.</h1>
-
-      <p>
-        Peças autorais em tecidos selecionados, pensadas para uma mulher que não abre mão de elegância no seu dia a dia.
-      </p>
-
-      <a href="catalogo.html?cat=novidades" class="btn btn-wine">
-        Comprar agora
-      </a>
-    </div>
-
-    <div class="hero-media">
-      <img
-        src="assets/images/giselly/giselly-01.jpeg"
-        alt="Look da coleção Use Giselly Cristine"
-      />
-    </div>
+  <section class="hero home-hero" aria-label="Campanha Use Giselly Cristine" id="homeHero">
+    <div class="home-hero-track" id="heroTrack"></div>
+    <div class="home-hero-controls" id="heroControls" aria-label="Navegação da campanha"></div>
   </section>
 
   <!-- CATEGORIAS -->
@@ -62,49 +45,7 @@
         <a href="catalogo.html" class="see-all">ver tudo</a>
       </div>
 
-      <div class="cat-grid">
-
-        <a class="cat-card" href="catalogo.html?cat=vestidos">
-          <img
-            src="assets/images/giselly/giselly-02.jpeg"
-            alt="Vestidos"
-          />
-          <span class="cat-label">Vestidos</span>
-        </a>
-
-        <a class="cat-card" href="catalogo.html?cat=conjuntos">
-          <img
-            src="assets/images/giselly/giselly-03.jpeg"
-            alt="Conjuntos"
-          />
-          <span class="cat-label">Conjuntos</span>
-        </a>
-
-        <a class="cat-card" href="catalogo.html?cat=blusas">
-          <img
-            src="assets/images/giselly/giselly-04.jpeg"
-            alt="Blusas"
-          />
-          <span class="cat-label">Blusas</span>
-        </a>
-
-        <a class="cat-card" href="catalogo.html?cat=calcas">
-          <img
-            src="assets/images/giselly/giselly-05.jpeg"
-            alt="Calças"
-          />
-          <span class="cat-label">Calças</span>
-        </a>
-
-        <a class="cat-card" href="catalogo.html?cat=saias">
-          <img
-            src="assets/images/giselly/giselly-06.jpeg"
-            alt="Saias"
-          />
-          <span class="cat-label">Saias</span>
-        </a>
-
-      </div>
+      <div class="home-categories" id="homeCategories" aria-live="polite"></div>
     </div>
   </section>
 
@@ -124,26 +65,8 @@
     </div>
   </section>
 
-  <!-- BANNER PROMOCIONAL -->
-  <section class="promo-banner">
-
-    <img
-      src="assets/images/giselly/giselly-07.jpeg"
-      alt="Campanha Use Giselly Cristine"
-    />
-
-    <div class="promo-inner">
-      <span class="label" style="color:var(--camel-soft)">
-        coleção cápsula
-      </span>
-
-      <h2>Alfaiataria que veste atitude.</h2>
-
-      <a href="catalogo.html?cat=conjuntos" class="btn">
-        Ver coleção
-      </a>
-    </div>
-
+  <section class="home-editorial" aria-label="Use Giselly Cristine">
+    <img src="assets/images/giselly/giselly-07.jpeg" alt="Campanha institucional Use Giselly Cristine" loading="lazy">
   </section>
 
   <!-- PRODUTOS EM DESTAQUE -->
@@ -151,7 +74,7 @@
     <div class="wrap">
 
       <div class="section-head">
-        <h2>Mais desejados</h2>
+        <h2>Destaques</h2>
         <a href="catalogo.html" class="see-all">ver todos</a>
       </div>
 
@@ -266,6 +189,48 @@
 
   mountLayout();
 
+  /* Conteúdo preparado para campanhas futuras. O primeiro slide permanece propositalmente sem texto. */
+  const HOME_HERO_SLIDES = [
+    { image: "assets/images/giselly/giselly-01.jpeg", alt: "Use Giselly Cristine" },
+    { image: "assets/images/giselly/giselly-08.jpeg", alt: "Editorial Use Giselly Cristine" },
+    { image: "assets/images/giselly/giselly-06.jpeg", alt: "Coleção Use Giselly Cristine" }
+  ];
+  const CATEGORY_IMAGES = {
+    vestidos: "assets/images/giselly/giselly-02.jpeg",
+    conjuntos: "assets/images/giselly/giselly-03.jpeg",
+    blusas: "assets/images/giselly/giselly-04.jpeg",
+    saias: "assets/images/giselly/giselly-06.jpeg",
+    biquinis: "assets/images/giselly/giselly-05.jpeg"
+  };
+  const escapeHomeHTML = value => String(value == null ? "" : value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+
+  function renderHero(){
+    const track = document.getElementById("heroTrack");
+    const controls = document.getElementById("heroControls");
+    let active = 0;
+    track.innerHTML = HOME_HERO_SLIDES.map((slide, index) => {
+      const copy = slide.title ? `<div class="home-hero-copy"><span class="label">${slide.eyebrow || ""}</span><h1>${slide.title}</h1>${slide.description ? `<p>${slide.description}</p>` : ""}${slide.cta ? `<a class="btn" href="${slide.cta.href}">${slide.cta.label}</a>` : ""}</div>` : "";
+      return `<article class="home-hero-slide ${index === 0 ? "is-active" : ""}"><img src="${slide.image}" alt="${slide.alt}" fetchpriority="${index === 0 ? "high" : "auto"}">${copy}</article>`;
+    }).join("");
+    controls.innerHTML = HOME_HERO_SLIDES.map((slide, index) => `<button type="button" class="home-hero-dot ${index === 0 ? "is-active" : ""}" aria-label="Exibir imagem ${index + 1}" aria-pressed="${index === 0}" data-hero-index="${index}"></button>`).join("");
+    function show(index){
+      active = (index + HOME_HERO_SLIDES.length) % HOME_HERO_SLIDES.length;
+      track.querySelectorAll(".home-hero-slide").forEach((item, itemIndex) => item.classList.toggle("is-active", itemIndex === active));
+      controls.querySelectorAll(".home-hero-dot").forEach((item, itemIndex) => { item.classList.toggle("is-active", itemIndex === active); item.setAttribute("aria-pressed", String(itemIndex === active)); });
+    }
+    controls.addEventListener("click", event => { const button = event.target.closest("[data-hero-index]"); if (button) show(Number(button.dataset.heroIndex)); });
+    if (HOME_HERO_SLIDES.length > 1) setInterval(() => show(active + 1), 6500);
+  }
+
+  function renderCategories(categories){
+    const box = document.getElementById("homeCategories");
+    box.innerHTML = categories.map(category => {
+      const image = CATEGORY_IMAGES[category.slug] || "assets/images/giselly/giselly-08.jpeg";
+      const name = escapeHomeHTML(category.nome);
+      return `<a class="home-category" href="catalogo.html?cat=${encodeURIComponent(category.slug)}"><img src="${image}" alt="${name}" loading="lazy"><span>${name}</span></a>`;
+    }).join("");
+  }
+
   function loadHomeCatalog(){
 
     if (window.catalogReady && window.UGCCatalog) {
@@ -317,18 +282,23 @@
 
     if (!result || !result.ok) return;
 
+    const launches = PRODUCTS.slice(0, 4);
+    /* Até existir uma escolha administrativa, Destaques reutiliza os próximos produtos reais sem duplicar Lançamentos. */
+    const highlights = PRODUCTS.filter(product => !launches.some(launch => launch.id === product.id)).slice(0, 4);
     document.getElementById("newArrivals").innerHTML =
-      PRODUCTS.slice(0, 4)
+      launches
         .map(productCardHTML)
         .join("");
 
     document.getElementById("featured").innerHTML =
-      PRODUCTS.slice(4, 8)
+      highlights
         .map(productCardHTML)
         .join("");
 
   }
 
+  renderHero();
+  Promise.resolve(window.categoryReady).then(result => renderCategories(result && result.ok ? result.items : []));
   renderHomeProducts();
 
   document.getElementById("perkTruck").innerHTML = ICONS.truck;
