@@ -103,14 +103,16 @@
     const catLabel = CATEGORY_LABELS[product.category] || product.category;
     const hasColors = product.colors.length > 0;
     const hasSizes = product.sizes.length > 0;
-    const images = product.images;
+    const selectedColor = hasColors ? product.colors[0] : null;
+    const images = selectedColor && selectedColor.images.length ? selectedColor.images : product.images;
 
     document.title = `${product.rawName} — Use Giselly Cristine`;
     crumbCatEl.innerHTML = catLabel;
     crumbCatEl.href = `catalogo.html?cat=${encodeURIComponent(product.category)}`;
     crumbNameEl.textContent = product.rawName;
 
-    pageEl.dataset.estoque = product.estoque === null ? "" : String(product.estoque);
+    pageEl.dataset.estoque = product.variantStock == null ? "" : String(product.variantStock);
+    pageEl.__ugcProduct = product;
     pageEl.innerHTML = `
     <div class="gallery">
       <div class="gallery-main">${images.length ? `<img id="mainImg" src="${images[0]}" alt="${product.name}">` : ""}</div>
@@ -130,14 +132,14 @@
       ${hasColors ? `<div class="pd-option">
         <div class="opt-head"><span>Cor: <strong id="colorLabel">${product.colors[0].name}</strong></span></div>
         <div class="swatch-row" id="colorRow">
-          ${product.colors.map((c,i) => `<button type="button" class="swatch ${i===0?'selected':''}" style="background:${c.hex}" data-color="${c.name}" aria-label="Selecionar cor ${c.name}" aria-pressed="${i===0}"></button>`).join("")}
+          ${product.colors.map((c,i) => `<button type="button" class="swatch ${i===0?'selected':''}" data-color="${c.name}" data-color-index="${i}" aria-label="Selecionar cor ${c.name}" aria-pressed="${i===0}">${c.name}</button>`).join("")}
         </div>
       </div>` : ""}
 
       ${hasSizes ? `<div class="pd-option">
         <div class="opt-head"><span>Tamanho</span><a href="#" class="guide-link" id="sizeGuideLink" data-open-size-guide>guia de medidas</a></div>
         <div class="size-row" id="sizeRow">
-          ${product.sizes.map((s,i) => `<button class="size-opt ${i===0?'selected':''}" data-size="${s}">${s}</button>`).join("")}
+          ${(hasColors ? ["P","M","G"] : product.sizes).map((s,i) => `<button class="size-opt ${selectedColor && !(selectedColor.stock[s] > 0) ? 'is-soldout' : (i===0?'selected':'')}" data-size="${s}" ${selectedColor && !(selectedColor.stock[s] > 0) ? 'disabled aria-disabled="true"' : ''}>${s}</button>`).join("")}
         </div>
       </div>` : ""}
 
@@ -174,7 +176,9 @@
       const colorEl = document.getElementById("colorLabel");
       const size = sizeEl ? sizeEl.dataset.size : "";
       const color = colorEl ? colorEl.textContent : "";
-      const added = await addToCart(product.id, size, color, 1);
+      const selected = product.hasVariants ? product.colors[Number(document.querySelector("#colorRow .swatch.selected").dataset.colorIndex)] : null;
+      if (product.hasVariants && (!size || !color)) { alert("Escolha uma cor e um tamanho disponível."); return; }
+      const added = await addToCart(product.id, size, color, 1, { image: selected && selected.images[0] ? selected.images[0] : product.images[0] });
       if (!added) return;
       const btn = document.getElementById("addToCartBtn");
       btn.textContent = "Adicionado à sacola ✓";
@@ -197,9 +201,24 @@
       colorSw.classList.add("selected");
       colorSw.setAttribute("aria-pressed", "true");
       document.getElementById("colorLabel").textContent = colorSw.dataset.color;
+      const product = pageEl.__ugcProduct;
+      const color = product && product.colors[Number(colorSw.dataset.colorIndex)];
+      if (color) {
+        const images = color.images.length ? color.images : product.images;
+        const main = document.querySelector(".gallery-main");
+        const thumbs = document.querySelector(".gallery-thumbs");
+        if (main) main.innerHTML = images.length ? `<img id="mainImg" src="${images[0]}" alt="${product.name}">` : "";
+        if (thumbs) thumbs.innerHTML = images.map((img, i) => `<button data-img="${img}" class="${i===0?'active':''}"><img src="${img}" alt=""></button>`).join("");
+        document.querySelectorAll("#sizeRow .size-opt").forEach(function (button, index) {
+          const available = color.stock[button.dataset.size] > 0;
+          button.disabled = !available; button.classList.toggle("is-soldout", !available);
+          button.classList.toggle("selected", available && index === 0);
+          button.setAttribute("aria-disabled", String(!available));
+        });
+      }
     }
     const sizeBtn = e.target.closest("#sizeRow .size-opt");
-    if (sizeBtn){
+    if (sizeBtn && !sizeBtn.disabled){
       document.querySelectorAll("#sizeRow .size-opt").forEach(b => b.classList.remove("selected"));
       sizeBtn.classList.add("selected");
     }

@@ -115,6 +115,13 @@
         <p class="adm-fielderr" id="eEstoque" hidden></p>
       </div>
 
+      <section class="adm-field" id="variantEditor" aria-labelledby="variantTitle">
+        <label id="variantTitle">Cores, fotos e estoque por tamanho</label>
+        <p class="adm-fieldhelp">Ao adicionar cores, o estoque por variação passa a ser usado na vitrine. Cada cor aceita até 2 fotos.</p>
+        <div id="variantRows" class="adm-variant-rows"></div>
+        <button class="btn btn-outline adm-btn-sm" type="button" id="addVariantColor">Adicionar cor</button>
+      </section>
+
       <label class="adm-check">
         <input type="checkbox" id="fAtivo" name="ativo" checked>
         <span><b>Produto ativo</b><small>Desmarque para tirar o produto de circulação sem excluí-lo.</small></span>
@@ -156,6 +163,7 @@
 <script src="../assets/js/products.js"></script>
 <script src="assets/admin-auth.js"></script>
 <script src="assets/admin-shell.js"></script>
+<script src="assets/admin-variacoes.js"></script>
 <script src="assets/admin-produtos.js"></script>
 </body>
 </html>

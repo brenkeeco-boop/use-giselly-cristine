@@ -61,7 +61,7 @@ async function loadCloudCart(){
   } catch (error) { reportSupabaseError("carrinho_itens", "loadCloudCart", error); throw error; }
 }
 
-async function addToCart(productId, size, color, qty = 1){
+async function addToCart(productId, size, color, qty = 1, options = {}){
   console.log("[DEBUG] addToCart acionado", { productId, size, color, qty });
   const user = await authenticatedUser();
   console.log("[DEBUG] addToCart usuário resolvido", { user:user ? { id:user.id, email:user.email } : null });
@@ -89,7 +89,7 @@ async function addToCart(productId, size, color, qty = 1){
         console.log("[DEBUG] resultado atualização carrinho_item", { itemId:existing.id, error:result.error });
       } catch (error) { reportSupabaseError("carrinho_itens", "update quantidade exceção", error); showStoreNotice(supabaseUserMessage(error), "error"); return false; }
     } else {
-      const payload = { carrinho_id:cart.id, produto_id:productId, nome_produto:product.name, imagem_produto:product.images[0], tamanho:size, cor:color, quantidade:qty, preco_unitario:product.price };
+      const payload = { carrinho_id:cart.id, produto_id:productId, nome_produto:product.name, imagem_produto:options.image || product.images[0], tamanho:size, cor:color, quantidade:qty, preco_unitario:product.price };
       console.log("[DEBUG] inserindo carrinho_item", payload);
       try {
         result = await supabaseClient.from("carrinho_itens").insert(payload);

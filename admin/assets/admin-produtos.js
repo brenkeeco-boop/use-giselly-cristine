@@ -420,7 +420,7 @@
       .map(storagePathFromUrl).filter(Boolean);
   }
 
-  function openForm(product) {
+  async function openForm(product) {
     editing = product || null;
     clearErrors();
     $("#pDialogTitle").textContent = editing ? "Editar produto" : "Novo produto";
@@ -438,6 +438,7 @@
     $("#fEstoque").value = editing ? String(editing.estoque == null ? 0 : editing.estoque) : "0";
     $("#fAtivo").checked = editing ? Boolean(editing.ativo) : true;
     resetPhotos(editing);
+    if (window.UGCVariants) await window.UGCVariants.load(editing && editing.id);
 
     $("#fSlugLine").hidden = !editing;
     if (editing) $("#fSlug").textContent = editing.slug;
@@ -506,10 +507,16 @@
       ? await updateProduct(wasEditing.id, payloadFrom(result.values, images.urls))
       : await createProduct(result.values, images.urls);
     if (!res.ok && images.uploaded.length) await removeStorageFiles(images.uploaded);
-    setSaving(false);
     if (!res.ok) {
+      setSaving(false);
       var box = $("#pFormError"); box.textContent = res.message; box.hidden = false; return;
     }
+    var variantResult = window.UGCVariants ? await window.UGCVariants.save(res.row.id) : { ok: true };
+    if (!variantResult.ok) {
+      setSaving(false);
+      var variantBox = $("#pFormError"); variantBox.textContent = variantResult.message; variantBox.hidden = false; return;
+    }
+    setSaving(false);
     var removed = await removeStorageFiles(removedExistingPaths());
     dlg.close();
     toast(removed.error ? "Produto salvo, mas uma foto removida ficou pendente no Storage." : (wasEditing ? "Produto atualizado." : "Produto criado."), removed.error ? "info" : "success");

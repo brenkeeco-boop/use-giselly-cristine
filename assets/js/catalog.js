@@ -47,7 +47,7 @@
 
   var TABLE = "produtos";
   /* Somente colunas públicas. Não pedimos ativo, atualizado_em nem id interno. */
-  var COLUMNS = "slug,nome,descricao,categoria,preco,preco_promocional,imagens,image_url";
+  var COLUMNS = "id,slug,nome,descricao,categoria,preco,preco_promocional,imagens,image_url";
   var TIMEOUT_MS = 12000;
   var FRIENDLY_ERROR = "Não foi possível carregar os produtos agora. Verifique sua conexão e tente novamente.";
   var SLUG_RE = /^[a-z0-9]+(-[a-z0-9]+)*$/;      /* mesmo formato do check produtos_slug_ck */
@@ -86,7 +86,7 @@
   }
 
   /* ---------- adaptador: linha do banco → formato de products.js ---------- */
-  function adaptRow(row) {
+  function adaptRow(row, cores) {
     if (!row || typeof row !== "object") return null;
 
     var slug = typeof row.slug === "string" ? row.slug.trim() : "";
@@ -112,6 +112,20 @@
 
     var rawDescription = row.descricao == null ? "" : String(row.descricao);
 
+    var variantColors = (cores || []).map(function (cor) {
+      var colorImages = [];
+      (Array.isArray(cor.imagens) ? cor.imagens : []).forEach(function (image) {
+        var clean = cleanImage(image);
+        if (clean && colorImages.indexOf(clean) === -1) colorImages.push(clean);
+      });
+      var stocks = {};
+      (Array.isArray(cor.produto_variacoes) ? cor.produto_variacoes : []).forEach(function (v) {
+        if (v && /^(P|M|G)$/.test(v.tamanho)) stocks[v.tamanho] = Math.max(0, Number(v.estoque) || 0);
+      });
+      return { id: cor.id, name: String(cor.nome || ""), images: colorImages, stock: stocks };
+    }).filter(function (cor) { return cor.name; });
+    var availableSizes = {};
+    variantColors.forEach(function (cor) { Object.keys(cor.stock).forEach(function (size) { if (cor.stock[size] > 0) availableSizes[size] = true; }); });
     return {
       id: slug,
       name: escapeHtml(nome),
@@ -121,11 +135,14 @@
       oldPrice: hasPromo ? preco : null,
       images: rawImages.map(escapeHtml),
       isNew: false,
-      sizes: [],
-      colors: [],
+      sizes: Object.keys(availableSizes),
+      colors: variantColors,
+      variations: variantColors,
       rawName: nome,
       rawDescription: rawDescription,
-      rawImages: rawImages
+      rawImages: rawImages,
+      hasVariants: variantColors.length > 0,
+      variantStock: variantColors.reduce(function (total, cor) { return total + Object.keys(cor.stock).reduce(function (sum, size) { return sum + cor.stock[size]; }, 0); }, 0)
     };
   }
 
@@ -171,7 +188,14 @@
       var res = await Promise.race([query, timeout]);
       if (res && res.error) throw fail(classify(res.error), res.error);
       if (!res || !Array.isArray(res.data)) throw fail("other", null);
-      return res.data;
+      var rows = res.data;
+      var ids = rows.map(function (row) { return row.id; }).filter(Boolean);
+      if (!ids.length) return rows;
+      var colorsRes = await client.from("produto_cores").select("id,produto_id,nome,imagens,produto_variacoes(tamanho,estoque)").in("produto_id", ids);
+      if (colorsRes.error) throw fail(classify(colorsRes.error), colorsRes.error);
+      var byProduct = {};
+      (colorsRes.data || []).forEach(function (color) { (byProduct[color.produto_id] || (byProduct[color.produto_id] = [])).push(color); });
+      return rows.map(function (row) { row.__ugcCores = byProduct[row.id] || []; return row; });
     } catch (e) {
       if (e && e.kind) throw e;
       throw fail(classify(e), e);
@@ -200,8 +224,8 @@
       var items = [];
       var skipped = 0;
       rows.forEach(function (row) {
-        var item = adaptRow(row);
-        if (item) items.push(item); else skipped++;
+        var item = adaptRow(row, row.__ugcCores);
+        if (item && (!item.hasVariants || item.variantStock > 0)) items.push(item); else skipped++;
       });
       if (skipped) console.warn("[Use Giselly Cristine][Catálogo] linhas ignoradas por dados inválidos:", skipped);
 

@@ -901,6 +901,16 @@ cursor:pointer;
 .adm-photo-actions button:disabled{ opacity:.45; cursor:default; }
 .adm-photo-actions .adm-photo-remove{ margin-left:auto; color:var(--error); }
 
+.adm-variant-rows{ display:grid; gap:.8rem; margin:.8rem 0; }
+.adm-variant-row{ padding:1rem; border:1px solid var(--line); background:var(--bone); }
+.adm-variant-head{ display:flex; gap:.8rem; align-items:end; justify-content:space-between; }
+.adm-variant-head label{ flex:1; }
+.adm-variant-head .adm-control{ margin-top:.3rem; }
+.adm-variant-photos{ display:flex; flex-wrap:wrap; gap:.6rem; margin:.6rem 0; }
+.adm-variant-photo{ width:6rem; position:relative; }
+.adm-variant-photo img{ width:6rem; height:6rem; object-fit:cover; display:block; }
+.adm-variant-photo button{ width:100%; border:1px solid var(--line); background:var(--white); color:var(--error); font-size:.7rem; cursor:pointer; }
+
 /* ---------- diálogos ---------- */
 
 .adm-dialog{
