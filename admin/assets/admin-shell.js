@@ -76,7 +76,7 @@
 
     side.innerHTML =
       '<div class="adm-brand">' +
-        '<img src="../assets/images/logo-use-giselly-cristine.png" alt="" width="52" height="52">' +
+        '<img src="../assets/images/logo-giselly-cristine-transparent.png" alt="" width="52" height="52">' +
         '<div class="adm-brand-text"><strong>Use Giselly Cristine</strong><span>Painel administrativo</span></div>' +
       "</div>" +
 

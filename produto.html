@@ -114,6 +114,10 @@
     const selectedColor = hasColors ? availableColors[0] : null;
     const firstAvailableSize = selectedColor && product.hasVariants ? ["P", "M", "G"].find(size => selectedColor.stock[size] > 0) : null;
     const images = selectedColor && selectedColor.images.length ? selectedColor.images : product.images;
+    const installments = product.price >= 200 ? 3 : (product.price >= 100 ? 2 : 0);
+    const installmentCopy = installments
+      ? `em até ${installments}x de ${formatBRL(product.price / installments)} sem juros · 10% off no Pix`
+      : "10% off no Pix";
 
     document.title = `${product.rawName} — Use Giselly Cristine`;
     crumbCatEl.innerHTML = catLabel;
@@ -135,7 +139,7 @@
       <div class="pd-price">
         ${product.oldPrice ? `<span class="old">${formatBRL(product.oldPrice)}</span><span class="now">${formatBRL(product.price)}</span>` : `<span>${formatBRL(product.price)}</span>`}
       </div>
-      <p class="pd-installment">em até 6x de ${formatBRL(product.price/6)} sem juros ou 10% off no Pix</p>
+      <p class="pd-installment">${installmentCopy}</p>
       <p class="pd-desc">${product.description}</p>
 
       ${hasColors ? `<div class="pd-option">
@@ -146,7 +150,7 @@
       </div>` : ""}
 
       ${hasSizes ? `<div class="pd-option">
-        <div class="opt-head"><span>Tamanho</span><a href="#" class="guide-link" id="sizeGuideLink" data-open-size-guide>guia de medidas</a></div>
+        <div class="opt-head"><span>Tamanho</span><button type="button" class="guide-link policy-link" data-policy-toggle aria-controls="policyInfo" aria-expanded="false">Nossa política de troca e devolução</button></div>
         <div class="size-row" id="sizeRow">
           ${(hasColors ? ["P","M","G"] : product.sizes).map((s,i) => `<button class="size-opt ${selectedColor && product.hasVariants && !(selectedColor.stock[s] > 0) ? 'is-soldout' : (product.hasVariants ? (s===firstAvailableSize?'selected':'') : (i===0?'selected':''))}" data-size="${s}" ${selectedColor && product.hasVariants && !(selectedColor.stock[s] > 0) ? 'disabled aria-disabled="true"' : ''}>${s}</button>`).join("")}
         </div>
@@ -162,13 +166,9 @@
           <summary>Envio e entrega</summary>
           <p>Enviamos para todo o Brasil. Prazo estimado de 5 a 12 dias úteis conforme a região, com frete grátis em compras acima de R$ 399.</p>
         </details>
-        <details>
-          <summary>Trocas e devoluções</summary>
-          <p>Você tem até 30 dias corridos após o recebimento para solicitar troca ou devolução, com a peça em perfeito estado.</p>
-        </details>
-        <details>
-          <summary>Guia de medidas</summary>
-          <p>Consulte a tabela de medidas de cada categoria antes de finalizar sua escolha para garantir o caimento ideal.</p>
+        <details id="policyInfo">
+          <summary>Nossa política de troca e devolução</summary>
+          <p>Solicite a troca em até 7 dias úteis. Para devolução e reembolso, a solicitação deve ser feita em até 24 horas.</p>
         </details>
       </div>
     </div>`;
@@ -232,6 +232,15 @@
     if (sizeBtn && !sizeBtn.disabled){
       document.querySelectorAll("#sizeRow .size-opt").forEach(b => b.classList.remove("selected"));
       sizeBtn.classList.add("selected");
+    }
+    const policyToggle = e.target.closest("[data-policy-toggle]");
+    if (policyToggle){
+      const policy = document.getElementById("policyInfo");
+      if (policy){
+        policy.open = true;
+        policyToggle.setAttribute("aria-expanded", "true");
+        policy.scrollIntoView({ behavior:"smooth", block:"nearest" });
+      }
     }
   });
 

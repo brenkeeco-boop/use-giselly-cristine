@@ -59,7 +59,7 @@ border-bottom:1px solid rgba(250,246,239,.1);
 }
 
 .adm-brand img{
-width:52px; height:52px; border-radius:50%; flex:0 0 auto;
+width:52px; height:52px; object-fit:contain; flex:0 0 auto;
 }
 
 .adm-brand-text{
@@ -370,7 +370,7 @@ border-radius:var(--adm-radius); text-align:center;
 
 .adm-login-logo{
 width:88px; height:88px; margin:0 auto 1.1rem;
-border-radius:50%;
+object-fit:contain;
 }
 
 .adm-login-card h1{

@@ -51,7 +51,7 @@
   var TIMEOUT_MS = 12000;
   var FRIENDLY_ERROR = "Não foi possível carregar os produtos agora. Verifique sua conexão e tente novamente.";
   var SLUG_RE = /^[a-z0-9]+(-[a-z0-9]+)*$/;      /* mesmo formato do check produtos_slug_ck */
-  var LOGO_RE = /logo-use-giselly-cristine/i;    /* a logo nunca é imagem de produto */
+  var LOGO_RE = /logo-(?:use-)?giselly-cristine/i; /* a logo nunca é imagem de produto */
 
   var state = { status: "loading", error: null, count: 0 };
   var inflight = null;
