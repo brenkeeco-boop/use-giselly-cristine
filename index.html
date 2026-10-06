@@ -35,7 +35,6 @@
     <div class="home-hero-track" id="heroTrack"></div>
     <div class="home-hero-controls" id="heroControls" aria-label="Navegação da campanha"></div>
   </section>
-  <div class="home-shipping-strip">Frete grátis para todo o Brasil em compras acima de R$ 399</div>
 
   <!-- CATEGORIAS -->
   <section class="section">
@@ -189,6 +188,19 @@
 <script>
 
   mountLayout();
+
+  /* Na Home, a faixa permanece acima e o header passa a integrar visualmente o Hero. */
+  const homeHeroElement = document.getElementById("homeHero");
+  const homeHeader = document.querySelector("#headerMount .site-header");
+  const homeActions = homeHeader && homeHeader.querySelector(".header-actions");
+  if (homeHeroElement && homeHeader) {
+    homeHeroElement.prepend(homeHeader);
+    const menu = document.getElementById("menuToggle");
+    const cart = document.getElementById("cartToggle");
+    const account = document.getElementById("accountLink");
+    const favorites = homeActions && homeActions.querySelector('a[href="conta.html?tab=favoritos"]');
+    if (homeActions) [cart, account, favorites, menu].filter(Boolean).forEach(item => homeActions.append(item));
+  }
 
   /* Conteúdo preparado para campanhas futuras. O primeiro slide permanece propositalmente sem texto. */
   const HOME_HERO_SLIDES = [
