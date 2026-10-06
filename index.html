@@ -24,7 +24,7 @@
   <link rel="stylesheet" href="assets/css/home.css" />
 </head>
 
-<body>
+<body class="home-page">
 
 <div id="headerMount"></div>
 
@@ -35,6 +35,7 @@
     <div class="home-hero-track" id="heroTrack"></div>
     <div class="home-hero-controls" id="heroControls" aria-label="Navegação da campanha"></div>
   </section>
+  <div class="home-shipping-strip">Frete grátis para todo o Brasil em compras acima de R$ 399</div>
 
   <!-- CATEGORIAS -->
   <section class="section">
@@ -219,7 +220,7 @@
       controls.querySelectorAll(".home-hero-dot").forEach((item, itemIndex) => { item.classList.toggle("is-active", itemIndex === active); item.setAttribute("aria-pressed", String(itemIndex === active)); });
     }
     controls.addEventListener("click", event => { const button = event.target.closest("[data-hero-index]"); if (button) show(Number(button.dataset.heroIndex)); });
-    if (HOME_HERO_SLIDES.length > 1) setInterval(() => show(active + 1), 6500);
+    if (HOME_HERO_SLIDES.length > 1) setInterval(() => show(active + 1), 3600);
   }
 
   function renderCategories(categories){

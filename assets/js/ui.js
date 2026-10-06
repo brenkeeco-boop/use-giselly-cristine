@@ -29,7 +29,7 @@ function headerTemplate(){
         </button>
       </div>
       <a href="index.html" class="brand" aria-label="Use Giselly Cristine">
-        <img class="brand-logo" src="assets/images/logo-use-giselly-cristine.png" width="480" height="480" alt="Use Giselly Cristine" fetchpriority="high" />
+        <img class="brand-logo" src="assets/images/logo-use-giselly-cristine-original.png" width="1136" height="1136" alt="Use Giselly Cristine" fetchpriority="high" />
       </a>
       <div class="header-actions">
         <button class="icon-btn hd-secondary" id="searchToggle" aria-label="Abrir busca" aria-controls="searchLine" aria-expanded="false">${ICONS.search}</button>
