@@ -14,7 +14,7 @@
     produtos: { table: "produtos" },
     pedidos: { table: "pedidos" },
     clientes: { table: "perfis" },
-    cupons: { table: null }
+    cupons: { table: "cupons" }
   };
   var RECENT_LIMIT = 5;
 
@@ -117,11 +117,11 @@
   async function loadAll() {
     var btn = $("[data-refresh]");
     if (btn) btn.disabled = true;
-    setKpi("cupons", "soon", "—", "Em breve · ainda sem tabela");
     await Promise.all([
       loadCount("produtos", function (n) { return n === 1 ? "produto cadastrado" : "produtos cadastrados"; }),
       loadCount("pedidos", "pedidos registrados"),
       loadCount("clientes", "clientes cadastrados"),
+      loadCount("cupons", function (n) { return n === 1 ? "cupom cadastrado" : "cupons cadastrados"; }),
       loadRecentOrders()
     ]);
     if (btn) btn.disabled = false;

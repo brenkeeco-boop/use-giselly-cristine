@@ -32,13 +32,13 @@
 
     { id: "categorias", label: "Categorias", icon: "grid", href: "categorias.html" },
 
-    { id: "pedidos", label: "Pedidos", icon: "bag" },
+    { id: "pedidos", label: "Pedidos", icon: "bag", href: "pedidos.html" },
 
-    { id: "clientes", label: "Clientes", icon: "users" },
+    { id: "clientes", label: "Clientes", icon: "users", href: "clientes.html" },
 
-    { id: "cupons", label: "Cupons", icon: "ticket" },
+    { id: "cupons", label: "Cupons", icon: "ticket", href: "cupons.html" },
 
-    { id: "configuracoes", label: "Configurações", icon: "sliders" }
+    { id: "configuracoes", label: "Configurações", icon: "sliders", href: "configuracoes.html" }
   ];
 
   function icon(name) {
