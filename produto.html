@@ -96,14 +96,23 @@
     else location.reload();
   }
 
+  function colorSwatchValue(name){
+    const colors = { preto: "#191817", branco: "#f8f6f0", marrom: "#76513d", vinho: "#6e2430", verde: "#4d6651", azul: "#405e81", rosa: "#d5909d", bege: "#d9c5a3", cinza: "#8d8d8b", amarelo: "#d9b441", laranja: "#ca703f", vermelho: "#a43c36" };
+    const key = String(name || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+    return colors[key] || "#b9a99b";
+  }
+
   function renderProduct(product){
     /* product.name / description / category / images já vêm escapados do catalog.js (seguros para innerHTML).
        Para textContent e document.title usa-se rawName. product.estoque é o estoque real (inteiro ou null);
        nesta etapa ele só fica disponível, sem alterar nenhuma regra de compra. */
     const catLabel = CATEGORY_LABELS[product.category] || product.category;
-    const hasColors = product.colors.length > 0;
+    const availableColors = (product.colors || []).filter(color => !product.hasVariants || ["P", "M", "G"].some(size => Number(color.stock && color.stock[size]) > 0));
+    const publicProduct = Object.assign({}, product, { colors: availableColors });
+    const hasColors = availableColors.length > 0;
     const hasSizes = product.sizes.length > 0;
-    const selectedColor = hasColors ? product.colors[0] : null;
+    const selectedColor = hasColors ? availableColors[0] : null;
+    const firstAvailableSize = selectedColor && product.hasVariants ? ["P", "M", "G"].find(size => selectedColor.stock[size] > 0) : null;
     const images = selectedColor && selectedColor.images.length ? selectedColor.images : product.images;
 
     document.title = `${product.rawName} — Use Giselly Cristine`;
@@ -112,7 +121,7 @@
     crumbNameEl.textContent = product.rawName;
 
     pageEl.dataset.estoque = product.variantStock == null ? "" : String(product.variantStock);
-    pageEl.__ugcProduct = product;
+    pageEl.__ugcProduct = publicProduct;
     pageEl.innerHTML = `
     <div class="gallery">
       <div class="gallery-main">${images.length ? `<img id="mainImg" src="${images[0]}" alt="${product.name}">` : ""}</div>
@@ -130,16 +139,16 @@
       <p class="pd-desc">${product.description}</p>
 
       ${hasColors ? `<div class="pd-option">
-        <div class="opt-head"><span>Cor: <strong id="colorLabel">${product.colors[0].name}</strong></span></div>
+        <div class="opt-head"><span>Cor: <strong id="colorLabel">${selectedColor.name}</strong></span></div>
         <div class="swatch-row" id="colorRow">
-          ${product.colors.map((c,i) => `<button type="button" class="swatch ${i===0?'selected':''}" data-color="${c.name}" data-color-index="${i}" aria-label="Selecionar cor ${c.name}" aria-pressed="${i===0}">${c.name}</button>`).join("")}
+          ${availableColors.map((c,i) => `<button type="button" class="swatch ${i===0?'selected':''}" style="background-color:${colorSwatchValue(c.name)}" data-color="${c.name}" data-color-index="${i}" aria-label="Selecionar cor ${c.name}" aria-pressed="${i===0}"></button>`).join("")}
         </div>
       </div>` : ""}
 
       ${hasSizes ? `<div class="pd-option">
         <div class="opt-head"><span>Tamanho</span><a href="#" class="guide-link" id="sizeGuideLink" data-open-size-guide>guia de medidas</a></div>
         <div class="size-row" id="sizeRow">
-          ${(hasColors ? ["P","M","G"] : product.sizes).map((s,i) => `<button class="size-opt ${selectedColor && !(selectedColor.stock[s] > 0) ? 'is-soldout' : (i===0?'selected':'')}" data-size="${s}" ${selectedColor && !(selectedColor.stock[s] > 0) ? 'disabled aria-disabled="true"' : ''}>${s}</button>`).join("")}
+          ${(hasColors ? ["P","M","G"] : product.sizes).map((s,i) => `<button class="size-opt ${selectedColor && product.hasVariants && !(selectedColor.stock[s] > 0) ? 'is-soldout' : (product.hasVariants ? (s===firstAvailableSize?'selected':'') : (i===0?'selected':''))}" data-size="${s}" ${selectedColor && product.hasVariants && !(selectedColor.stock[s] > 0) ? 'disabled aria-disabled="true"' : ''}>${s}</button>`).join("")}
         </div>
       </div>` : ""}
 
@@ -176,7 +185,7 @@
       const colorEl = document.getElementById("colorLabel");
       const size = sizeEl ? sizeEl.dataset.size : "";
       const color = colorEl ? colorEl.textContent : "";
-      const selected = product.hasVariants ? product.colors[Number(document.querySelector("#colorRow .swatch.selected").dataset.colorIndex)] : null;
+      const selected = product.hasVariants ? pageEl.__ugcProduct.colors[Number(document.querySelector("#colorRow .swatch.selected").dataset.colorIndex)] : null;
       if (product.hasVariants && (!size || !color)) { alert("Escolha uma cor e um tamanho disponível."); return; }
       const added = await addToCart(product.id, size, color, 1, { image: selected && selected.images[0] ? selected.images[0] : product.images[0] });
       if (!added) return;
@@ -209,10 +218,12 @@
         const thumbs = document.querySelector(".gallery-thumbs");
         if (main) main.innerHTML = images.length ? `<img id="mainImg" src="${images[0]}" alt="${product.name}">` : "";
         if (thumbs) thumbs.innerHTML = images.map((img, i) => `<button data-img="${img}" class="${i===0?'active':''}"><img src="${img}" alt=""></button>`).join("");
-        document.querySelectorAll("#sizeRow .size-opt").forEach(function (button, index) {
+        let selectedSize = false;
+        document.querySelectorAll("#sizeRow .size-opt").forEach(function (button) {
           const available = color.stock[button.dataset.size] > 0;
           button.disabled = !available; button.classList.toggle("is-soldout", !available);
-          button.classList.toggle("selected", available && index === 0);
+          button.classList.toggle("selected", available && !selectedSize);
+          if (available && !selectedSize) selectedSize = true;
           button.setAttribute("aria-disabled", String(!available));
         });
       }
