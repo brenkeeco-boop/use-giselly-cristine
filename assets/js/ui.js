@@ -29,7 +29,7 @@ function headerTemplate(){
         </button>
       </div>
       <a href="index.html" class="brand" aria-label="Use Giselly Cristine">
-        <img class="brand-logo" src="assets/images/logo-giselly-cristine-transparent.png" width="1254" height="1254" alt="Use Giselly Cristine" fetchpriority="high" />
+        <img class="brand-logo" src="assets/images/logo-giselly-cristine-transparent.png?v=2" width="1254" height="1254" alt="Use Giselly Cristine" fetchpriority="high" />
       </a>
       <div class="header-actions">
         <button class="icon-btn hd-secondary" id="searchToggle" aria-label="Abrir busca" aria-controls="searchLine" aria-expanded="false">${ICONS.search}</button>
@@ -129,7 +129,7 @@ function footerTemplate(){
   return `
   <div class="wrap footer-grid">
     <div class="footer-brand">
-      <a href="index.html" class="footer-logo-link" aria-label="Use Giselly Cristine"><img class="footer-logo" src="assets/images/logo-giselly-cristine-transparent.png" width="1254" height="1254" alt="Use Giselly Cristine"></a>
+      <a href="index.html" class="footer-logo-link" aria-label="Use Giselly Cristine"><img class="footer-logo" src="assets/images/logo-giselly-cristine-transparent.png?v=2" width="1254" height="1254" alt="Use Giselly Cristine"></a>
       <p>Moda feminina autoral, pensada para quem se veste com intenção. Work smarter. Live better.</p>
       <div class="social-row">
         <a href="#" aria-label="Instagram">${ICONS.tag}</a>
