@@ -41,7 +41,7 @@
     <div class="wrap">
 
       <div class="section-head">
-        <h2>Compre por categoria</h2>
+        <h2>Categorias</h2>
         <a href="catalogo.html" class="see-all">ver tudo</a>
       </div>
 
@@ -65,16 +65,12 @@
     </div>
   </section>
 
-  <section class="home-editorial" aria-label="Use Giselly Cristine">
-    <img src="assets/images/giselly/giselly-07.jpeg" alt="Campanha institucional Use Giselly Cristine" loading="lazy">
-  </section>
-
   <!-- PRODUTOS EM DESTAQUE -->
   <section class="section">
     <div class="wrap">
 
       <div class="section-head">
-        <h2>Destaques</h2>
+        <h2>Fav por aqui</h2>
         <a href="catalogo.html" class="see-all">ver todos</a>
       </div>
 
@@ -83,35 +79,8 @@
     </div>
   </section>
 
-  <!-- INSTITUCIONAL -->
-  <section class="section" style="background:var(--bone-2)">
-    <div class="wrap perks-grid">
-
-      <div class="perk">
-        <div class="perk-icon" id="perkTruck"></div>
-        <h4>Envio para todo o Brasil</h4>
-        <p>Entregamos com carinho em todas as regiões do país.</p>
-      </div>
-
-      <div class="perk">
-        <div class="perk-icon" id="perkShield"></div>
-        <h4>Compra 100% segura</h4>
-        <p>Seus dados e pagamentos protegidos em todas as etapas.</p>
-      </div>
-
-      <div class="perk">
-        <div class="perk-icon" id="perkChat"></div>
-        <h4>Atendimento personalizado</h4>
-        <p>Consultoria de estilo para te ajudar a escolher o look ideal.</p>
-      </div>
-
-      <div class="perk">
-        <div class="perk-icon" id="perkTag"></div>
-        <h4>Produtos selecionados</h4>
-        <p>Peças autorais com caimento e qualidade testados a dedo.</p>
-      </div>
-
-    </div>
+  <section class="home-editorial" aria-label="Use Giselly Cristine">
+    <img src="assets/images/giselly/giselly-07.jpeg" alt="Campanha institucional Use Giselly Cristine" loading="lazy">
   </section>
 
   <!-- INSTAGRAM -->
@@ -173,6 +142,16 @@
 
   </section>
 
+  <!-- INSTITUCIONAL -->
+  <section class="section" style="background:var(--bone-2)">
+    <div class="wrap perks-grid">
+      <div class="perk"><div class="perk-icon" id="perkTruck"></div><h4>Envio para todo o Brasil</h4><p>Entregamos com carinho em todas as regiões do país.</p></div>
+      <div class="perk"><div class="perk-icon" id="perkShield"></div><h4>Compra 100% segura</h4><p>Seus dados e pagamentos protegidos em todas as etapas.</p></div>
+      <div class="perk"><div class="perk-icon" id="perkChat"></div><h4>Atendimento personalizado</h4><p>Consultoria de estilo para te ajudar a escolher o look ideal.</p></div>
+      <div class="perk"><div class="perk-icon" id="perkTag"></div><h4>Produtos selecionados</h4><p>Peças autorais com caimento e qualidade testados a dedo.</p></div>
+    </div>
+  </section>
+
 </main>
 
 <footer class="site-footer" id="footerMount"></footer>
@@ -199,7 +178,9 @@
     const cart = document.getElementById("cartToggle");
     const account = document.getElementById("accountLink");
     const favorites = homeActions && homeActions.querySelector('a[href="conta.html?tab=favoritos"]');
-    if (homeActions) [cart, account, favorites, menu].filter(Boolean).forEach(item => homeActions.append(item));
+    const homeLeft = homeHeader.querySelector(".header-left");
+    if (homeLeft && account) homeLeft.append(account);
+    if (homeActions) [cart, favorites, menu].filter(Boolean).forEach(item => homeActions.append(item));
   }
 
   /* Conteúdo preparado para campanhas futuras. O primeiro slide permanece propositalmente sem texto. */
