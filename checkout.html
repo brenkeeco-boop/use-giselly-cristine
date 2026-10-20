@@ -30,44 +30,37 @@
       <div class="form-card">
         <h3>Dados pessoais</h3>
         <div class="form-grid">
-          <div class="field"><label>Nome completo</label><input type="text" placeholder="Seu nome"></div>
-          <div class="field"><label>CPF</label><input type="text" placeholder="000.000.000-00"></div>
-          <div class="field"><label>E-mail</label><input type="email" placeholder="seu@email.com"></div>
-          <div class="field"><label>Telefone</label><input type="text" placeholder="(00) 00000-0000"></div>
+          <div class="field"><label>Nome completo</label><input name="nome_destinatario" type="text" placeholder="Seu nome" required></div>
+          <div class="field"><label>CPF</label><input name="cpf" type="text" placeholder="000.000.000-00"></div>
+          <div class="field"><label>E-mail</label><input name="email" type="email" placeholder="seu@email.com"></div>
+          <div class="field"><label>Telefone</label><input name="telefone" type="text" placeholder="(00) 00000-0000"></div>
         </div>
       </div>
 
       <div class="form-card">
         <h3>Endereço de entrega</h3>
         <div class="form-grid">
-          <div class="field"><label>CEP</label><input type="text" placeholder="00000-000"></div>
-          <div class="field"><label>Cidade</label><input type="text" placeholder="Sua cidade"></div>
-          <div class="field full"><label>Endereço</label><input type="text" placeholder="Rua, número"></div>
-          <div class="field"><label>Complemento</label><input type="text" placeholder="Apto, bloco (opcional)"></div>
-          <div class="field"><label>Bairro</label><input type="text" placeholder="Bairro"></div>
+          <div class="field"><label>CEP</label><input name="cep" type="text" placeholder="00000-000" required></div>
+          <div class="field"><label>Cidade</label><input name="cidade" type="text" placeholder="Sua cidade" required></div>
+          <div class="field full"><label>Rua</label><input name="rua" type="text" placeholder="Nome da rua" required></div>
+          <div class="field"><label>Número</label><input name="numero" type="text" placeholder="Número" required></div>
+          <div class="field"><label>Estado</label><input name="estado" type="text" maxlength="2" placeholder="UF" required></div>
+          <div class="field"><label>Complemento</label><input name="complemento" type="text" placeholder="Apto, bloco (opcional)"></div>
+          <div class="field"><label>Bairro</label><input name="bairro" type="text" placeholder="Bairro" required></div>
         </div>
       </div>
 
       <div class="form-card">
         <h3>Forma de entrega</h3>
         <div class="pay-options">
-          <label class="pay-opt"><input type="radio" name="shipping" checked> Padrão — 5 a 12 dias úteis — Grátis</label>
-          <label class="pay-opt"><input type="radio" name="shipping"> Expressa — 2 a 4 dias úteis — R$ 34,90</label>
+          <label class="pay-opt"><input type="radio" name="shipping" value="padrao" checked> Padrão — Frete grátis</label>
+          <label class="pay-opt"><input type="radio" name="shipping" value="expresso"> Expressa — Frete grátis temporariamente</label>
         </div>
       </div>
 
       <div class="form-card">
         <h3>Forma de pagamento</h3>
-        <div class="pay-options">
-          <label class="pay-opt"><input type="radio" name="payment" checked> Pix — 10% de desconto</label>
-          <label class="pay-opt"><input type="radio" name="payment"> Cartão de crédito — em até 6x sem juros</label>
-          <label class="pay-opt"><input type="radio" name="payment"> Boleto bancário</label>
-        </div>
-        <div class="form-grid" id="cardFields" style="display:none;margin-top:1rem">
-          <div class="field full"><label>Número do cartão</label><input type="text" placeholder="0000 0000 0000 0000"></div>
-          <div class="field"><label>Validade</label><input type="text" placeholder="MM/AA"></div>
-          <div class="field"><label>CVV</label><input type="text" placeholder="000"></div>
-        </div>
+        <p class="label">Você escolherá Pix, cartão ou boleto no ambiente seguro do Mercado Pago.</p>
       </div>
     </div>
 
@@ -77,8 +70,8 @@
       <div class="summary-row" style="margin-top:1rem"><span>Subtotal</span><span id="sumSubtotal"></span></div>
       <div class="summary-row"><span>Frete</span><span id="sumFrete"></span></div>
       <div class="summary-row total"><span>Total</span><span id="sumTotal"></span></div>
-      <button class="btn btn-wine btn-block" id="placeOrderBtn">Confirmar pedido</button>
-      <p class="label" style="text-align:center;margin-top:.8rem">Ambiente de demonstração — nenhum pagamento é processado.</p>
+      <button class="btn btn-wine btn-block" id="placeOrderBtn" disabled>Pagamento em preparação</button>
+      <p class="label" id="checkoutNotice" style="text-align:center;margin-top:.8rem">As compras permanecem desativadas enquanto a integração é validada.</p>
     </div>
   </div>
 </main>
@@ -88,38 +81,9 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="assets/js/supabase.js"></script>
 <script src="assets/js/products.js"></script>
+<script src="assets/js/catalog.js"></script>
 <script src="assets/js/cart.js"></script>
 <script src="assets/js/ui.js"></script>
-<script>
-  mountLayout();
-  const cart = getCart();
-  const subtotal = cartSubtotal();
-  const frete = subtotal >= 399 || subtotal === 0 ? 0 : 24.90;
-
-  document.getElementById("orderMini").innerHTML = cart.map(item => {
-    const p = getProductById(item.productId);
-    if (!p) return "";
-    return `<div class="cr-mini"><img src="${p.images[0]}" alt=""><div><div>${p.name}</div><div style="color:var(--ink-soft)">Tam. ${item.size} · ${item.qty}x</div></div></div>`;
-  }).join("") || `<p style="color:var(--ink-soft);font-size:.85rem">Sua sacola está vazia.</p>`;
-
-  document.getElementById("sumSubtotal").textContent = formatBRL(subtotal);
-  document.getElementById("sumFrete").textContent = frete === 0 ? "Grátis" : formatBRL(frete);
-  document.getElementById("sumTotal").textContent = formatBRL(subtotal + frete);
-
-  document.querySelectorAll('input[name="payment"]').forEach(r => {
-    r.addEventListener("change", (e) => {
-      document.getElementById("cardFields").style.display = e.target.parentElement.textContent.includes("crédito") ? "grid" : "none";
-    });
-  });
-
-  document.getElementById("placeOrderBtn").addEventListener("click", async () => {
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    if (!session){
-      location.href = `conta.html?tab=entrar&returnTo=${encodeURIComponent("checkout.html")}`;
-      return;
-    }
-    alert("Pedido de demonstração recebido! Nenhum pagamento real foi processado — esta etapa será conectada ao backend futuramente.");
-  });
-</script>
+<script src="assets/js/checkout.js"></script>
 </body>
 </html>

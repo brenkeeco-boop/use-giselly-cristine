@@ -1,0 +1,16 @@
+[functions.create-mercado-pago-payment]
+verify_jwt = true
+
+# Mercado Pago does not send a Supabase JWT. Its x-signature is validated in code.
+[functions.mercado-pago-webhook]
+verify_jwt = false
+
+# Etapa 2 — Checkout Pro. As funções antigas acima foram preservadas.
+[functions.criar-pagamento]
+verify_jwt = true
+
+[functions.webhook-mercado-pago]
+verify_jwt = false
+
+[functions.expirar-reservas]
+verify_jwt = false
